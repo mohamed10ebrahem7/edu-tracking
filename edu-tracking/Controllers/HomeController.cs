@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using edu_tracking.Infrastructure;
 using edu_tracking.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,7 +16,17 @@ namespace edu_tracking.Controllers
 
         public IActionResult Index()
         {
-            return View();
+            if (User.Identity?.IsAuthenticated != true)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var panel = RolePanel.ControllerFor(User);
+
+            // "Home" means the account has no role yet, so redirecting would loop.
+            return panel == "Home"
+                ? View()
+                : RedirectToAction("Index", panel);
         }
 
         public IActionResult Privacy()
