@@ -50,7 +50,7 @@ dotnet run --project edu-tracking/edu-tracking.csproj
 The application will be available at:
 
 ```
-https://localhost:5001
+https://localhost:7115
 ```
 
 ## Project Structure
