@@ -15,6 +15,7 @@
         <partial name="Admin/_Topbar" model="@(ViewData["CurrentUserName"] as string ?? "Admin")" />
 
         <div class="admin-content">
+            <partial name="Admin/_Alerts" />
             @RenderBody()
         </div>
     </div>

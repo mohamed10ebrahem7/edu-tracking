@@ -12,9 +12,12 @@
                         <div class="stat-value">@card.Value</div>
                     </div>
                 </div>
-                <div class="stat-trend mt-2">
-                    <i class="bi bi-arrow-up-short"></i>@card.Trend
-                </div>
+                @if (!string.IsNullOrEmpty(card.Trend))
+                {
+                    <div class="stat-trend mt-2">
+                        <i class="bi bi-arrow-up-short"></i>@card.Trend
+                    </div>
+                }
             </div>
         </div>
     }

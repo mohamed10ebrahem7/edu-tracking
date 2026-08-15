@@ -19,7 +19,7 @@
         <div class="dropdown">
             <button class="btn btn-link text-decoration-none text-body dropdown-toggle d-flex align-items-center gap-2"
                     type="button" data-bs-toggle="dropdown">
-                <span class="avatar-initials tone-purple">@Initials(Model)</span>
+                <span class="avatar-initials tone-purple">@Ui.Initials(Model)</span>
                 <span class="d-none d-sm-inline fw-semibold">@Model</span>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
@@ -35,13 +35,3 @@
         </div>
     </div>
 </header>
-
-@functions {
-    static string Initials(string name)
-    {
-        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        return parts.Length >= 2
-            ? $"{char.ToUpper(parts[0][0])}{char.ToUpper(parts[1][0])}"
-            : name[..Math.Min(2, name.Length)].ToUpper();
-    }
-}

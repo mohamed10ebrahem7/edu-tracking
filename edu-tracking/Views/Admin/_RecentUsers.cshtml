@@ -32,11 +32,11 @@
             <tbody>
                 @foreach (var user in Model)
                 {
-                    var tone = ToneFor(user.Role);
+                    var tone = Ui.RoleTone(user.Role);
                     <tr>
                         <td>
                             <div class="d-flex align-items-center gap-2">
-                                <span class="avatar-initials tone-@tone">@Initials(user.Name)</span>
+                                <span class="avatar-initials tone-@tone">@Ui.Initials(user.Name)</span>
                                 <span>
                                     <span class="d-block fw-semibold">@user.Name</span>
                                     <span class="text-secondary small">@user.Role</span>
@@ -45,7 +45,7 @@
                         </td>
                         <td><span class="badge-soft tone-@tone">@user.Role</span></td>
                         <td class="text-secondary">@user.Email</td>
-                        <td><span class="badge-soft tone-green">@user.Status</span></td>
+                        <td><span class="badge-soft tone-@Ui.StatusTone(user.Status)">@user.Status</span></td>
                         <td class="text-secondary">@user.JoinedDate</td>
                         <td class="text-end">
                             <button class="icon-button" type="button" aria-label="Actions for @user.Name">
@@ -58,22 +58,3 @@
         </table>
     </div>
 </section>
-
-@functions {
-    static string ToneFor(string role) => role switch
-    {
-        "Student" => "purple",
-        "Teacher" => "green",
-        "Parent" => "orange",
-        "Admin" => "blue",
-        _ => "gray"
-    };
-
-    static string Initials(string name)
-    {
-        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        return parts.Length >= 2
-            ? $"{char.ToUpper(parts[0][0])}{char.ToUpper(parts[1][0])}"
-            : name[..Math.Min(2, name.Length)].ToUpper();
-    }
-}

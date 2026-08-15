@@ -1,0 +1,139 @@
+@model TeacherFormViewModel
+@{
+    var isEdit = Model.IsEdit;
+    ViewData["Title"] = isEdit ? "Edit teacher" : "Add teacher";
+    ViewData["ActiveNav"] = "teachers";
+}
+
+<div class="mb-3">
+    <div class="crumbs mb-1">
+        <a asp-action="Index">Dashboard</a> / <a asp-action="Teachers">Teachers</a> / @(isEdit ? "Edit" : "New")
+    </div>
+    <h1 class="h5 fw-bold mb-0">@(isEdit ? $"Edit {Model.FullName}" : "Add New Teacher")</h1>
+    <span class="text-secondary small">
+        @(isEdit
+            ? "Update the account, subjects and booking rules."
+            : "Creates the login, assigns the Teacher role and saves the profile.")
+    </span>
+</div>
+
+<form asp-action="@(isEdit ? "EditTeacher" : "CreateTeacher")" method="post" class="card-soft p-4">
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="FullName" class="form-label small fw-semibold"></label>
+            <input asp-for="FullName" class="form-control" placeholder="Sarah Johnson" />
+            <span asp-validation-for="FullName" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="UserName" class="form-label small fw-semibold"></label>
+            @if (isEdit)
+            {
+                @* The login name is fixed so a teacher's sign-in never changes underneath them. *@
+                <input class="form-control" value="@Model.UserName" disabled />
+                <input type="hidden" asp-for="UserName" />
+                <span class="text-secondary small">The username cannot be changed.</span>
+            }
+            else
+            {
+                <input asp-for="UserName" class="form-control" placeholder="sarah.johnson" />
+                <span asp-validation-for="UserName" class="text-danger small"></span>
+            }
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Email" class="form-label small fw-semibold"></label>
+            <input asp-for="Email" class="form-control" placeholder="sarah.j@email.com" />
+            <span asp-validation-for="Email" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Phone" class="form-label small fw-semibold"></label>
+            <input asp-for="Phone" class="form-control" placeholder="+20 100 000 0000" />
+            <span asp-validation-for="Phone" class="text-danger small"></span>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label small fw-semibold">Subjects</label>
+            <div class="d-flex flex-wrap gap-3">
+                @foreach (var subject in Model.AvailableSubjects)
+                {
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="SubjectIds" value="@subject.Id"
+                               id="subject-@subject.Id" checked="@Model.SubjectIds.Contains(subject.Id)" />
+                        <label class="form-check-label small" for="subject-@subject.Id">@subject.Name</label>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <label asp-for="HourlyRate" class="form-label small fw-semibold"></label>
+            <input asp-for="HourlyRate" class="form-control" type="number" step="1" />
+            <span asp-validation-for="HourlyRate" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label asp-for="DefaultSessionMinutes" class="form-label small fw-semibold"></label>
+            <input asp-for="DefaultSessionMinutes" class="form-control" type="number" />
+            <span asp-validation-for="DefaultSessionMinutes" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label asp-for="MinBookingNoticeHours" class="form-label small fw-semibold"></label>
+            <input asp-for="MinBookingNoticeHours" class="form-control" type="number" />
+            <span asp-validation-for="MinBookingNoticeHours" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label asp-for="CancellationCutoffHours" class="form-label small fw-semibold"></label>
+            <input asp-for="CancellationCutoffHours" class="form-control" type="number" />
+            <span asp-validation-for="CancellationCutoffHours" class="text-danger small"></span>
+        </div>
+
+        @if (!isEdit)
+        {
+            <div class="col-md-6">
+                <label asp-for="TemporaryPassword" class="form-label small fw-semibold"></label>
+                <input asp-for="TemporaryPassword" class="form-control" placeholder="Leave blank to generate one" />
+                <span asp-validation-for="TemporaryPassword" class="text-danger small"></span>
+                <span class="text-secondary small d-block">
+                    The teacher is asked to change it after signing in.
+                </span>
+            </div>
+        }
+
+        <div class="col-12">
+            <label asp-for="Bio" class="form-label small fw-semibold"></label>
+            <textarea asp-for="Bio" class="form-control" rows="2"
+                      placeholder="Short introduction shown to parents"></textarea>
+            <span asp-validation-for="Bio" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <div class="form-check form-switch">
+                <input asp-for="IsAcceptingBookings" class="form-check-input" role="switch" />
+                <label asp-for="IsAcceptingBookings" class="form-check-label small"></label>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="form-check form-switch">
+                <input asp-for="AutoApproveBookings" class="form-check-input" role="switch" />
+                <label asp-for="AutoApproveBookings" class="form-check-label small"></label>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <a class="btn btn-admin-outline" asp-action="Teachers">Cancel</a>
+        <button class="btn btn-admin" type="submit">@(isEdit ? "Save changes" : "Create teacher")</button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

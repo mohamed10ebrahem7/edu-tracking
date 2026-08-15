@@ -1,5 +1,6 @@
 using edu_tracking.Data;
 using edu_tracking.Domain.Identity;
+using edu_tracking.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -34,6 +35,8 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.ExpireTimeSpan = TimeSpan.FromHours(8);
     options.SlidingExpiration = true;
 });
+
+builder.Services.AddScoped<TeacherAdminService>();
 
 builder.Services.AddControllersWithViews();
 

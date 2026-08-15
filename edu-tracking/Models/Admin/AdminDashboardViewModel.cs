@@ -17,7 +17,8 @@ public class AdminDashboardViewModel
 }
 
 /// <summary>Tone is a colour key: purple, green, blue, orange, red or gray.</summary>
-public record StatCard(string Label, string Value, string Trend, string Icon, string Tone);
+/// <param name="Trend">Optional; omitted when there is no comparison figure to show.</param>
+public record StatCard(string Label, string Value, string? Trend, string Icon, string Tone);
 
 public record DistributionSlice(string Label, int Count, string Tone);
 
