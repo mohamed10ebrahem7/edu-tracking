@@ -1,0 +1,79 @@
+@model IReadOnlyList<RecentUser>
+
+<section class="card-soft h-100">
+    <div class="card-soft-header pb-3">
+        <h2 class="card-soft-title">Recent Users</h2>
+
+        <div class="d-flex align-items-center gap-3">
+            @* Design-only tabs: wire each to a filtered query when the users screen exists. *@
+            <div class="filter-tabs">
+                <a class="active" href="#">All</a>
+                <a href="#">Students</a>
+                <a href="#">Teachers</a>
+                <a href="#">Parents</a>
+                <a href="#">Admins</a>
+            </div>
+            <a class="link-muted text-nowrap" href="#">View all users</a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Joined Date</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model)
+                {
+                    var tone = ToneFor(user.Role);
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="avatar-initials tone-@tone">@Initials(user.Name)</span>
+                                <span>
+                                    <span class="d-block fw-semibold">@user.Name</span>
+                                    <span class="text-secondary small">@user.Role</span>
+                                </span>
+                            </div>
+                        </td>
+                        <td><span class="badge-soft tone-@tone">@user.Role</span></td>
+                        <td class="text-secondary">@user.Email</td>
+                        <td><span class="badge-soft tone-green">@user.Status</span></td>
+                        <td class="text-secondary">@user.JoinedDate</td>
+                        <td class="text-end">
+                            <button class="icon-button" type="button" aria-label="Actions for @user.Name">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@functions {
+    static string ToneFor(string role) => role switch
+    {
+        "Student" => "purple",
+        "Teacher" => "green",
+        "Parent" => "orange",
+        "Admin" => "blue",
+        _ => "gray"
+    };
+
+    static string Initials(string name)
+    {
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2
+            ? $"{char.ToUpper(parts[0][0])}{char.ToUpper(parts[1][0])}"
+            : name[..Math.Min(2, name.Length)].ToUpper();
+    }
+}

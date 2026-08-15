@@ -1,0 +1,47 @@
+@model string
+
+<header class="admin-topbar">
+    <button class="icon-button" type="button" data-toggle-sidebar aria-label="Toggle navigation">
+        <i class="bi bi-list"></i>
+    </button>
+
+    <div class="admin-search ms-lg-4">
+        <i class="bi bi-search"></i>
+        <input type="search" placeholder="Search anything..." aria-label="Search" />
+    </div>
+
+    <div class="ms-auto d-flex align-items-center gap-2">
+        <button class="icon-button" type="button" aria-label="Notifications">
+            <i class="bi bi-bell"></i>
+            <span class="badge-dot">3</span>
+        </button>
+
+        <div class="dropdown">
+            <button class="btn btn-link text-decoration-none text-body dropdown-toggle d-flex align-items-center gap-2"
+                    type="button" data-bs-toggle="dropdown">
+                <span class="avatar-initials tone-purple">@Initials(Model)</span>
+                <span class="d-none d-sm-inline fw-semibold">@Model</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="#">My profile</a></li>
+                <li><a class="dropdown-item" href="#">Settings</a></li>
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                        <button class="dropdown-item" type="submit">Sign out</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</header>
+
+@functions {
+    static string Initials(string name)
+    {
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2
+            ? $"{char.ToUpper(parts[0][0])}{char.ToUpper(parts[1][0])}"
+            : name[..Math.Min(2, name.Length)].ToUpper();
+    }
+}

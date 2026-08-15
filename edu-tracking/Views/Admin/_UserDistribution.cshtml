@@ -1,0 +1,52 @@
+@model UserDistribution
+@{
+    // Donut drawn with one stroked circle per slice, offset by the slices before it.
+    const double radius = 52;
+    var circumference = 2 * Math.PI * radius;
+    var drawn = 0d;
+}
+
+<section class="card-soft h-100">
+    <div class="card-soft-header">
+        <h2 class="card-soft-title">User Distribution</h2>
+    </div>
+
+    <div class="d-flex align-items-center gap-3 flex-wrap p-3">
+        <div class="donut-wrap">
+            <svg width="164" height="164" viewBox="0 0 140 140" role="img" aria-label="User distribution">
+                <g transform="rotate(-90 70 70)">
+                    @foreach (var slice in Model.Slices)
+                    {
+                        var length = Model.ArcFractionOf(slice) * circumference;
+                        <circle class="donut-@slice.Tone" cx="70" cy="70" r="@radius" fill="none" stroke-width="20"
+                                stroke-dasharray="@Number(length) @Number(circumference - length)"
+                                stroke-dashoffset="@Number(-drawn)"></circle>
+                        drawn += length;
+                    }
+                </g>
+            </svg>
+            <div class="donut-center">
+                <strong>@Model.DisplayTotal</strong><br />
+                <span>Total</span>
+            </div>
+        </div>
+
+        <ul class="tidy-list flex-grow-1">
+            @foreach (var slice in Model.Slices)
+            {
+                <li class="px-0 py-1 border-0">
+                    @* tone-* supplies the colour; the inline style paints the dot solid with it. *@
+                    <span class="legend-dot tone-@slice.Tone" style="background: currentColor;"></span>
+                    <span>@slice.Label</span>
+                    <span class="ms-auto text-secondary">@slice.Count (@Model.PercentageOf(slice)%)</span>
+                </li>
+            }
+        </ul>
+    </div>
+</section>
+
+@functions {
+    // SVG needs a dot as the decimal separator regardless of server culture.
+    static string Number(double value) =>
+        value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+}

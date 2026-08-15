@@ -1,0 +1,21 @@
+@model IReadOnlyList<StatCard>
+
+<div class="row g-3 row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xxl-5">
+    @foreach (var card in Model)
+    {
+        <div class="col">
+            <div class="card-soft h-100 p-3">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="icon-bubble tone-@card.Tone"><i class="bi @card.Icon"></i></span>
+                    <div>
+                        <div class="stat-label">@card.Label</div>
+                        <div class="stat-value">@card.Value</div>
+                    </div>
+                </div>
+                <div class="stat-trend mt-2">
+                    <i class="bi bi-arrow-up-short"></i>@card.Trend
+                </div>
+            </div>
+        </div>
+    }
+</div>

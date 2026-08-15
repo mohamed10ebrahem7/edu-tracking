@@ -1,0 +1,18 @@
+@model IReadOnlyList<ActivityItem>
+
+<section class="card-soft h-100">
+    <div class="card-soft-header">
+        <h2 class="card-soft-title">Recent Activities</h2>
+    </div>
+
+    <ul class="tidy-list mt-2">
+        @foreach (var activity in Model)
+        {
+            <li>
+                <span class="icon-bubble icon-bubble-sm tone-@activity.Tone"><i class="bi @activity.Icon"></i></span>
+                <span class="flex-grow-1">@activity.Title</span>
+                <span class="text-secondary small text-nowrap">@activity.TimeAgo</span>
+            </li>
+        }
+    </ul>
+</section>

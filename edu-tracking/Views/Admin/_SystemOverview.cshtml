@@ -1,0 +1,22 @@
+@model IReadOnlyList<OverviewItem>
+
+<section class="card-soft h-100">
+    <div class="card-soft-header">
+        <h2 class="card-soft-title">System Overview</h2>
+        <a class="link-muted" href="#">View all</a>
+    </div>
+
+    <ul class="tidy-list mt-2">
+        @foreach (var item in Model)
+        {
+            <li>
+                <span class="icon-bubble icon-bubble-sm tone-@item.Tone"><i class="bi @item.Icon"></i></span>
+                <span class="flex-grow-1">
+                    <span class="d-block text-secondary small">@item.Title</span>
+                    <span class="fw-semibold">@item.Detail</span>
+                </span>
+                <span class="badge-soft tone-@item.Tone">@item.Badge</span>
+            </li>
+        }
+    </ul>
+</section>
