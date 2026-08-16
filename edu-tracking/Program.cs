@@ -36,7 +36,9 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
+builder.Services.AddScoped<AccountAdminService>();
 builder.Services.AddScoped<TeacherAdminService>();
+builder.Services.AddScoped<StudentAdminService>();
 
 builder.Services.AddControllersWithViews();
 

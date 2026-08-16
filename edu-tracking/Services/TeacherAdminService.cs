@@ -1,25 +1,17 @@
-using System.Security.Cryptography;
 using edu_tracking.Data;
 using edu_tracking.Domain;
 using edu_tracking.Domain.Identity;
 using edu_tracking.Models.Admin;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace edu_tracking.Services;
 
-public record TeacherSaveResult(bool Succeeded, string? Error = null, string? TemporaryPassword = null)
-{
-    public static TeacherSaveResult Ok(string? temporaryPassword = null) => new(true, null, temporaryPassword);
-    public static TeacherSaveResult Fail(string error) => new(false, error);
-}
-
 /// <summary>
-/// All database work behind the Users &gt; Teachers screens. A teacher is an
-/// <see cref="ApplicationUser"/> in the Teacher role plus a <see cref="Teacher"/> profile,
-/// so both are always created and updated together.
+/// The Users &gt; Teachers screens. A teacher is an <see cref="ApplicationUser"/> in the
+/// Teacher role plus a <see cref="Teacher"/> profile; account work is delegated to
+/// <see cref="AccountAdminService"/>.
 /// </summary>
-public class TeacherAdminService(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
+public class TeacherAdminService(ApplicationDbContext db, AccountAdminService accounts)
 {
     public async Task<IReadOnlyList<SubjectOption>> GetSubjectOptionsAsync() =>
         await db.Subjects
@@ -34,7 +26,7 @@ public class TeacherAdminService(ApplicationDbContext db, UserManager<Applicatio
 
         var totalItems = await query.CountAsync();
         var currentPage = Math.Max(1, filter.Page);
-        var (weekStart, weekEnd) = CurrentWeekUtc();
+        var (weekStart, weekEnd) = AccountAdminService.CurrentWeekUtc();
 
         var teachers = await query
             .OrderBy(t => t.User.FullName)
@@ -56,8 +48,8 @@ public class TeacherAdminService(ApplicationDbContext db, UserManager<Applicatio
                 SessionsThisWeek = db.Sessions
                     .Count(s => s.TeacherId == t.UserId && s.StartUtc >= weekStart && s.StartUtc < weekEnd),
                 Status = !t.User.IsActive
-                    ? TeacherStatus.Inactive
-                    : t.User.MustChangePassword ? TeacherStatus.Pending : TeacherStatus.Active,
+                    ? AccountStatus.Inactive
+                    : t.User.MustChangePassword ? AccountStatus.Pending : AccountStatus.Active,
                 AcceptingBookings = t.IsAcceptingBookings,
                 IsActive = t.User.IsActive,
                 JoinedUtc = t.User.CreatedAtUtc
@@ -105,43 +97,20 @@ public class TeacherAdminService(ApplicationDbContext db, UserManager<Applicatio
         return teacher;
     }
 
-    public async Task<TeacherSaveResult> CreateAsync(TeacherFormViewModel form)
+    public Task<AccountResult> CreateAsync(TeacherFormViewModel form)
     {
         var password = string.IsNullOrWhiteSpace(form.TemporaryPassword)
-            ? GenerateTemporaryPassword()
+            ? AccountAdminService.GenerateTemporaryPassword()
             : form.TemporaryPassword;
 
-        // The account and the profile must appear together or not at all. Because the
-        // context is configured with EnableRetryOnFailure, a manual transaction has to
-        // run inside the execution strategy so the whole unit is retried as one.
-        var strategy = db.Database.CreateExecutionStrategy();
-
-        return await strategy.ExecuteAsync(async () =>
+        return accounts.InTransactionAsync(async () =>
         {
-            await using var transaction = await db.Database.BeginTransactionAsync();
+            var account = new NewAccount(form.FullName, form.UserName, form.Email, form.Phone);
+            var (user, error) = await accounts.CreateUserAsync(account, AppRoles.Teacher, password);
 
-            var user = new ApplicationUser
+            if (user is null)
             {
-                UserName = form.UserName.Trim(),
-                Email = string.IsNullOrWhiteSpace(form.Email) ? null : form.Email.Trim(),
-                EmailConfirmed = true,
-                PhoneNumber = form.Phone,
-                FullName = form.FullName.Trim(),
-                IsActive = true,
-                MustChangePassword = true,
-                CreatedAtUtc = DateTime.UtcNow
-            };
-
-            var created = await userManager.CreateAsync(user, password);
-            if (!created.Succeeded)
-            {
-                return TeacherSaveResult.Fail(Describe(created));
-            }
-
-            var roleAdded = await userManager.AddToRoleAsync(user, AppRoles.Teacher);
-            if (!roleAdded.Succeeded)
-            {
-                return TeacherSaveResult.Fail(Describe(roleAdded));
+                return AccountResult.Fail(error!);
             }
 
             db.Teachers.Add(new Teacher
@@ -159,13 +128,11 @@ public class TeacherAdminService(ApplicationDbContext db, UserManager<Applicatio
             AddSubjects(user.Id, form.SubjectIds);
 
             await db.SaveChangesAsync();
-            await transaction.CommitAsync();
-
-            return TeacherSaveResult.Ok(password);
+            return AccountResult.Ok(password);
         });
     }
 
-    public async Task<TeacherSaveResult> UpdateAsync(TeacherFormViewModel form)
+    public async Task<AccountResult> UpdateAsync(TeacherFormViewModel form)
     {
         var teacher = await db.Teachers
             .Include(t => t.User)
@@ -174,7 +141,7 @@ public class TeacherAdminService(ApplicationDbContext db, UserManager<Applicatio
 
         if (teacher is null)
         {
-            return TeacherSaveResult.Fail("That teacher no longer exists.");
+            return AccountResult.Fail("That teacher no longer exists.");
         }
 
         teacher.User.FullName = form.FullName.Trim();
@@ -187,65 +154,17 @@ public class TeacherAdminService(ApplicationDbContext db, UserManager<Applicatio
         teacher.IsAcceptingBookings = form.IsAcceptingBookings;
         teacher.AutoApproveBookings = form.AutoApproveBookings;
 
-        var newEmail = string.IsNullOrWhiteSpace(form.Email) ? null : form.Email.Trim();
-        if (!string.Equals(teacher.User.Email, newEmail, StringComparison.OrdinalIgnoreCase))
+        var emailError = await accounts.UpdateEmailAsync(teacher.User, form.Email);
+        if (emailError is not null)
         {
-            // Goes through UserManager so the normalised email stays in sync.
-            var emailChanged = await userManager.SetEmailAsync(teacher.User, newEmail);
-            if (!emailChanged.Succeeded)
-            {
-                return TeacherSaveResult.Fail(Describe(emailChanged));
-            }
+            return AccountResult.Fail(emailError);
         }
 
         SyncSubjects(teacher, form.SubjectIds);
 
         await db.SaveChangesAsync();
-        return TeacherSaveResult.Ok();
+        return AccountResult.Ok();
     }
-
-    public async Task<TeacherSaveResult> SetActiveAsync(Guid id, bool isActive)
-    {
-        var user = await db.Users.FirstOrDefaultAsync(u => u.Id == id);
-        if (user is null)
-        {
-            return TeacherSaveResult.Fail("That teacher no longer exists.");
-        }
-
-        user.IsActive = isActive;
-        await db.SaveChangesAsync();
-
-        // Invalidates any cookie the teacher is still holding.
-        await userManager.UpdateSecurityStampAsync(user);
-
-        return TeacherSaveResult.Ok();
-    }
-
-    public async Task<TeacherSaveResult> ResetPasswordAsync(Guid id)
-    {
-        var user = await db.Users.FirstOrDefaultAsync(u => u.Id == id);
-        if (user is null)
-        {
-            return TeacherSaveResult.Fail("That teacher no longer exists.");
-        }
-
-        var password = GenerateTemporaryPassword();
-        var token = await userManager.GeneratePasswordResetTokenAsync(user);
-        var reset = await userManager.ResetPasswordAsync(user, token, password);
-
-        if (!reset.Succeeded)
-        {
-            return TeacherSaveResult.Fail(Describe(reset));
-        }
-
-        user.MustChangePassword = true;
-        await db.SaveChangesAsync();
-
-        return TeacherSaveResult.Ok(password);
-    }
-
-    public Task<string?> GetNameAsync(Guid id) =>
-        db.Users.Where(u => u.Id == id).Select(u => u.FullName).FirstOrDefaultAsync();
 
     // ---------- helpers ----------
 
@@ -265,15 +184,13 @@ public class TeacherAdminService(ApplicationDbContext db, UserManager<Applicatio
             query = query.Where(t => t.Subjects.Any(ts => ts.SubjectId == subjectId));
         }
 
-        query = filter.Status switch
+        return filter.Status switch
         {
-            TeacherStatus.Active => query.Where(t => t.User.IsActive && !t.User.MustChangePassword),
-            TeacherStatus.Pending => query.Where(t => t.User.IsActive && t.User.MustChangePassword),
-            TeacherStatus.Inactive => query.Where(t => !t.User.IsActive),
+            AccountStatus.Active => query.Where(t => t.User.IsActive && !t.User.MustChangePassword),
+            AccountStatus.Pending => query.Where(t => t.User.IsActive && t.User.MustChangePassword),
+            AccountStatus.Inactive => query.Where(t => !t.User.IsActive),
             _ => query
         };
-
-        return query;
     }
 
     private async Task<IReadOnlyList<StatCard>> GetStatsAsync()
@@ -309,35 +226,5 @@ public class TeacherAdminService(ApplicationDbContext db, UserManager<Applicatio
 
         var existing = teacher.Subjects.Select(ts => ts.SubjectId).ToHashSet();
         AddSubjects(teacher.UserId, subjectIds.Where(id => !existing.Contains(id)));
-    }
-
-    /// <summary>Sunday-to-Saturday window used by the "sessions this week" column.</summary>
-    private static (DateTime Start, DateTime End) CurrentWeekUtc()
-    {
-        var today = DateTime.UtcNow.Date;
-        var start = today.AddDays(-(int)today.DayOfWeek);
-        return (start, start.AddDays(7));
-    }
-
-    private static string Describe(IdentityResult result) =>
-        string.Join(" ", result.Errors.Select(e => e.Description));
-
-    private static string GenerateTemporaryPassword()
-    {
-        // Ambiguous characters left out so the password can be read aloud.
-        const string upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-        const string lower = "abcdefghijkmnpqrstuvwxyz";
-        const string digits = "23456789";
-
-        var characters = new List<char> { Pick(upper), Pick(lower), Pick(digits), Pick(digits) };
-
-        while (characters.Count < 10)
-        {
-            characters.Add(Pick(upper + lower + digits));
-        }
-
-        return new string([.. characters.OrderBy(_ => RandomNumberGenerator.GetInt32(1000))]);
-
-        static char Pick(string set) => set[RandomNumberGenerator.GetInt32(set.Length)];
     }
 }

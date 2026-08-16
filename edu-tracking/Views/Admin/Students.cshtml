@@ -1,0 +1,26 @@
+@model StudentsPageViewModel
+@{
+    ViewData["Title"] = "Students";
+    ViewData["CurrentUserName"] = Model.CurrentUserName;
+    ViewData["ActiveNav"] = "students";
+}
+
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-3">
+    <div>
+        <div class="crumbs mb-1">
+            <a asp-action="Index">Dashboard</a> / Users / Students
+        </div>
+        <h1 class="h5 fw-bold mb-0">Students</h1>
+        <span class="text-secondary small">Manage student accounts, grades and guardians</span>
+    </div>
+
+    <a class="btn btn-admin" asp-action="CreateStudent">
+        <i class="bi bi-plus-lg me-1"></i> Add New Student
+    </a>
+</div>
+
+<partial name="_StatCards" model="Model.Stats" />
+
+<div class="mt-3">
+    <partial name="_StudentsTable" model="Model" />
+</div>

@@ -1,3 +1,5 @@
+using edu_tracking.Domain;
+
 namespace edu_tracking.Infrastructure;
 
 /// <summary>
@@ -27,6 +29,14 @@ public static class Ui
         "Parent" => "orange",
         "Admin" => "blue",
         _ => "gray"
+    };
+
+    /// <summary>Grade1..Grade12 are numbered 11..22 in the enum, hence the offset.</summary>
+    public static string GradeLabel(GradeLevel grade) => grade switch
+    {
+        GradeLevel.Kg1 => "KG 1",
+        GradeLevel.Kg2 => "KG 2",
+        _ => $"Grade {(int)grade - 10}"
     };
 
     public static string StatusTone(string status) => status switch

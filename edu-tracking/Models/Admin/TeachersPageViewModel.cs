@@ -11,8 +11,6 @@ public class TeachersPageViewModel
 
     public TeacherFilter Filter { get; init; } = new();
     public PageInfo Page { get; init; } = new();
-
-    public static readonly string[] StatusOptions = [TeacherStatus.Active, TeacherStatus.Pending, TeacherStatus.Inactive];
 }
 
 public record SubjectOption(int Id, string Name);
@@ -27,51 +25,21 @@ public class TeacherRow
     public decimal HourlyRate { get; init; }
     public int Students { get; init; }
     public int SessionsThisWeek { get; init; }
-    public string Status { get; init; } = TeacherStatus.Active;
+    public string Status { get; init; } = AccountStatus.Active;
     public bool AcceptingBookings { get; init; }
     public bool IsActive { get; init; }
     public DateTime JoinedUtc { get; init; }
 }
 
-/// <summary>
-/// Derived from the account rather than stored: a teacher who still has a temporary
-/// password has not signed in yet, which is worth showing separately from a disabled one.
-/// </summary>
-public static class TeacherStatus
+public class TeacherFilter : ListFilter
 {
-    public const string Active = "Active";
-    public const string Pending = "Pending";
-    public const string Inactive = "Inactive";
-}
-
-public class TeacherFilter
-{
-    public string? Search { get; init; }
     public int? SubjectId { get; init; }
-    public string? Status { get; init; }
-    public int Page { get; init; } = 1;
-    public int PageSize { get; init; } = 10;
 
-    /// <summary>Keeps the active filters on pagination links.</summary>
-    public Dictionary<string, string> ToRouteValues(int page)
+    protected override void AddExtraRouteValues(Dictionary<string, string> values)
     {
-        var values = new Dictionary<string, string> { ["page"] = page.ToString() };
-
-        if (!string.IsNullOrWhiteSpace(Search)) values["search"] = Search;
-        if (SubjectId is int subjectId) values["subjectId"] = subjectId.ToString();
-        if (!string.IsNullOrWhiteSpace(Status)) values["status"] = Status;
-
-        return values;
+        if (SubjectId is int subjectId)
+        {
+            values["subjectId"] = subjectId.ToString();
+        }
     }
-}
-
-public class PageInfo
-{
-    public int Current { get; init; } = 1;
-    public int Size { get; init; } = 10;
-    public int TotalItems { get; init; }
-
-    public int TotalPages => Size == 0 ? 1 : Math.Max(1, (int)Math.Ceiling(TotalItems / (double)Size));
-    public int FirstShown => TotalItems == 0 ? 0 : ((Current - 1) * Size) + 1;
-    public int LastShown => Math.Min(Current * Size, TotalItems);
 }

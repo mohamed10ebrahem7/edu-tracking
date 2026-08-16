@@ -1,0 +1,134 @@
+@model StudentFormViewModel
+@{
+    var isEdit = Model.IsEdit;
+    ViewData["Title"] = isEdit ? "Edit student" : "Add student";
+    ViewData["ActiveNav"] = "students";
+}
+
+<div class="mb-3">
+    <div class="crumbs mb-1">
+        <a asp-action="Index">Dashboard</a> / <a asp-action="Students">Students</a> / @(isEdit ? "Edit" : "New")
+    </div>
+    <h1 class="h5 fw-bold mb-0">@(isEdit ? $"Edit {Model.FullName}" : "Add New Student")</h1>
+    <span class="text-secondary small">
+        @(isEdit
+            ? "Update the account, grade and guardians."
+            : "Creates the login, assigns the Student role and saves the profile.")
+    </span>
+</div>
+
+<form asp-action="@(isEdit ? "EditStudent" : "CreateStudent")" method="post" class="card-soft p-4">
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="FullName" class="form-label small fw-semibold"></label>
+            <input asp-for="FullName" class="form-control" placeholder="Omar Hassan" />
+            <span asp-validation-for="FullName" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="UserName" class="form-label small fw-semibold"></label>
+            @if (isEdit)
+            {
+                @* The login name is fixed so a student's sign-in never changes underneath them. *@
+                <input class="form-control" value="@Model.UserName" disabled />
+                <input type="hidden" asp-for="UserName" />
+                <span class="text-secondary small">The username cannot be changed.</span>
+            }
+            else
+            {
+                <input asp-for="UserName" class="form-control" placeholder="omar.hassan" />
+                <span asp-validation-for="UserName" class="text-danger small"></span>
+            }
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Email" class="form-label small fw-semibold"></label>
+            <input asp-for="Email" class="form-control" placeholder="omar.h@email.com" />
+            <span asp-validation-for="Email" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Phone" class="form-label small fw-semibold"></label>
+            <input asp-for="Phone" class="form-control" placeholder="+20 100 000 0000" />
+            <span asp-validation-for="Phone" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-4">
+            <label asp-for="GradeLevel" class="form-label small fw-semibold"></label>
+            <select asp-for="GradeLevel" class="form-select">
+                @foreach (var grade in StudentsPageViewModel.AllGrades)
+                {
+                    <option value="@grade.Value">@grade.Label</option>
+                }
+            </select>
+            <span asp-validation-for="GradeLevel" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-4">
+            <label asp-for="DateOfBirth" class="form-label small fw-semibold"></label>
+            <input asp-for="DateOfBirth" class="form-control" type="date" />
+            <span asp-validation-for="DateOfBirth" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-4">
+            <label asp-for="School" class="form-label small fw-semibold"></label>
+            <input asp-for="School" class="form-control" placeholder="Cairo International School" />
+            <span asp-validation-for="School" class="text-danger small"></span>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label small fw-semibold">Guardians</label>
+            @if (Model.AvailableParents.Count == 0)
+            {
+                <div class="text-secondary small">
+                    No parent accounts yet. Create parents first, then link them here.
+                </div>
+            }
+            else
+            {
+                <div class="d-flex flex-wrap gap-3">
+                    @foreach (var parent in Model.AvailableParents)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="ParentIds" value="@parent.Id"
+                                   id="parent-@parent.Id" checked="@Model.ParentIds.Contains(parent.Id)" />
+                            <label class="form-check-label small" for="parent-@parent.Id">@parent.Name</label>
+                        </div>
+                    }
+                </div>
+                <span class="text-secondary small">The first guardian linked becomes the primary contact.</span>
+            }
+        </div>
+
+        @if (!isEdit)
+        {
+            <div class="col-md-6">
+                <label asp-for="TemporaryPassword" class="form-label small fw-semibold"></label>
+                <input asp-for="TemporaryPassword" class="form-control" placeholder="Leave blank to generate one" />
+                <span asp-validation-for="TemporaryPassword" class="text-danger small"></span>
+                <span class="text-secondary small d-block">
+                    The student is asked to change it after signing in.
+                </span>
+            </div>
+        }
+
+        <div class="col-12">
+            <label asp-for="Notes" class="form-label small fw-semibold"></label>
+            <textarea asp-for="Notes" class="form-control" rows="2"
+                      placeholder="Visible to admins only"></textarea>
+            <span asp-validation-for="Notes" class="text-danger small"></span>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <a class="btn btn-admin-outline" asp-action="Students">Cancel</a>
+        <button class="btn btn-admin" type="submit">@(isEdit ? "Save changes" : "Create student")</button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

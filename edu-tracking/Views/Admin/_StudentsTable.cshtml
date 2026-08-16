@@ -1,18 +1,18 @@
-@model TeachersPageViewModel
+@model StudentsPageViewModel
 
 <section class="card-soft">
-    <form class="toolbar" method="get" asp-action="Teachers">
+    <form class="toolbar" method="get" asp-action="Students">
         <div class="admin-search me-auto">
             <i class="bi bi-search"></i>
             <input type="search" name="search" value="@Model.Filter.Search"
-                   placeholder="Search name, username or email..." aria-label="Search teachers" />
+                   placeholder="Search name, username, email or school..." aria-label="Search students" />
         </div>
 
-        <select class="form-select" name="subjectId" aria-label="Filter by subject">
-            <option value="">All subjects</option>
-            @foreach (var subject in Model.Subjects)
+        <select class="form-select" name="gradeLevel" aria-label="Filter by grade">
+            <option value="">All grades</option>
+            @foreach (var grade in StudentsPageViewModel.AllGrades)
             {
-                <option value="@subject.Id" selected="@(Model.Filter.SubjectId == subject.Id)">@subject.Name</option>
+                <option value="@grade.Value" selected="@((int?)Model.Filter.GradeLevel == grade.Value)">@grade.Label</option>
             }
         </select>
 
@@ -25,87 +25,88 @@
         </select>
 
         <button class="btn btn-admin-outline" type="submit">Apply</button>
-        <a class="btn btn-admin-outline" asp-action="Teachers">Reset</a>
+        <a class="btn btn-admin-outline" asp-action="Students">Reset</a>
     </form>
 
     <div class="table-responsive">
         <table class="admin-table">
             <thead>
                 <tr>
-                    <th>Teacher</th>
-                    <th>Subjects</th>
-                    <th>Hourly Rate</th>
-                    <th>Students</th>
+                    <th>Student</th>
+                    <th>Grade</th>
+                    <th>School</th>
+                    <th>Guardians</th>
                     <th>Sessions / Week</th>
-                    <th>Bookings</th>
+                    <th>Attendance</th>
                     <th>Status</th>
                     <th>Joined</th>
                     <th class="text-end">Actions</th>
                 </tr>
             </thead>
             <tbody>
-                @if (Model.Teachers.Count == 0)
+                @if (Model.Students.Count == 0)
                 {
                     <tr>
                         <td colspan="9" class="text-center text-secondary py-5">
-                            No teachers found.
-                            <a asp-action="CreateTeacher">Add the first one</a>.
+                            No students found.
+                            <a asp-action="CreateStudent">Add the first one</a>.
                         </td>
                     </tr>
                 }
 
-                @foreach (var teacher in Model.Teachers)
+                @foreach (var student in Model.Students)
                 {
                     <tr>
                         <td>
                             <div class="d-flex align-items-center gap-2">
-                                <span class="avatar-initials tone-green">@Ui.Initials(teacher.Name)</span>
+                                <span class="avatar-initials tone-purple">@Ui.Initials(student.Name)</span>
                                 <span>
-                                    <span class="d-block fw-semibold">@teacher.Name</span>
-                                    <span class="text-secondary small">@teacher.Email</span>
+                                    <span class="d-block fw-semibold">@student.Name</span>
+                                    <span class="text-secondary small">@student.Email</span>
                                 </span>
                             </div>
                         </td>
+                        <td><span class="badge-soft tone-blue">@student.Grade</span></td>
+                        <td class="text-secondary">@(string.IsNullOrWhiteSpace(student.School) ? "—" : student.School)</td>
                         <td>
-                            @if (teacher.Subjects.Count == 0)
+                            @if (student.Guardians.Count == 0)
                             {
-                                <span class="text-secondary small">—</span>
+                                <span class="text-secondary small">None linked</span>
                             }
-                            @foreach (var subject in teacher.Subjects)
+                            @foreach (var guardian in student.Guardians)
                             {
-                                <span class="subject-chip">@subject</span>
+                                <span class="subject-chip">@guardian</span>
                             }
                         </td>
-                        <td class="fw-semibold text-nowrap">EGP @teacher.HourlyRate.ToString("N0")</td>
-                        <td class="text-secondary">@teacher.Students</td>
-                        <td class="text-secondary">@teacher.SessionsThisWeek</td>
+                        <td class="text-secondary">@student.SessionsThisWeek</td>
                         <td>
-                            @if (teacher.AcceptingBookings)
+                            @if (student.AttendanceRate is int rate)
                             {
-                                <span class="badge-soft tone-green">Open</span>
+                                <span class="fw-semibold">@rate%</span>
+                                <span class="text-secondary small">(@student.AttendanceMarked marked)</span>
                             }
                             else
                             {
-                                <span class="badge-soft tone-gray">Closed</span>
+                                <span class="text-secondary small">—</span>
                             }
                         </td>
-                        <td><span class="badge-soft tone-@Ui.StatusTone(teacher.Status)">@teacher.Status</span></td>
-                        <td class="text-secondary text-nowrap">@teacher.JoinedUtc.ToString("MMM dd, yyyy")</td>
+                        <td><span class="badge-soft tone-@Ui.StatusTone(student.Status)">@student.Status</span></td>
+                        <td class="text-secondary text-nowrap">@student.JoinedUtc.ToString("MMM dd, yyyy")</td>
                         <td class="text-end">
                             <div class="dropdown">
                                 <button class="icon-button" type="button" data-bs-toggle="dropdown"
-                                        aria-label="Actions for @teacher.Name">
+                                        aria-label="Actions for @student.Name">
                                     <i class="bi bi-three-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li>
-                                        <a class="dropdown-item" asp-action="EditTeacher" asp-route-id="@teacher.Id">
+                                        <a class="dropdown-item" asp-action="EditStudent" asp-route-id="@student.Id">
                                             <i class="bi bi-pencil me-2"></i>Edit
                                         </a>
                                     </li>
                                     <li>
-                                        <form asp-action="ResetTeacherPassword" method="post">
-                                            <input type="hidden" name="id" value="@teacher.Id" />
+                                        <form asp-action="ResetStudentPassword" method="post">
+                                            <input type="hidden" name="id" value="@student.Id" />
                                             <button class="dropdown-item" type="submit">
                                                 <i class="bi bi-key me-2"></i>Reset password
                                             </button>
@@ -113,10 +114,10 @@
                                     </li>
                                     <li><hr class="dropdown-divider" /></li>
                                     <li>
-                                        <form asp-action="SetTeacherActive" method="post">
-                                            <input type="hidden" name="id" value="@teacher.Id" />
-                                            <input type="hidden" name="isActive" value="@((!teacher.IsActive).ToString())" />
-                                            @if (teacher.IsActive)
+                                        <form asp-action="SetStudentActive" method="post">
+                                            <input type="hidden" name="id" value="@student.Id" />
+                                            <input type="hidden" name="isActive" value="@((!student.IsActive).ToString())" />
+                                            @if (student.IsActive)
                                             {
                                                 <button class="dropdown-item text-danger" type="submit">
                                                     <i class="bi bi-slash-circle me-2"></i>Deactivate
@@ -141,15 +142,15 @@
 
     <div class="table-footer">
         <span class="text-secondary small">
-            Showing @Model.Page.FirstShown–@Model.Page.LastShown of @Model.Page.TotalItems teachers
+            Showing @Model.Page.FirstShown–@Model.Page.LastShown of @Model.Page.TotalItems students
         </span>
 
         @if (Model.Page.TotalPages > 1)
         {
-            <nav aria-label="Teacher pages">
+            <nav aria-label="Student pages">
                 <ul class="pagination pagination-sm mb-0">
                     <li class="page-item @(Model.Page.Current == 1 ? "disabled" : "")">
-                        <a class="page-link" asp-action="Teachers"
+                        <a class="page-link" asp-action="Students"
                            asp-all-route-data="Model.Filter.ToRouteValues(Model.Page.Current - 1)">Previous</a>
                     </li>
 
@@ -157,13 +158,13 @@
                     @for (var pageNumber = 1; pageNumber <= Model.Page.TotalPages; pageNumber++)
                     {
                         <li class="page-item @(pageNumber == Model.Page.Current ? "active" : "")">
-                            <a class="page-link" asp-action="Teachers"
+                            <a class="page-link" asp-action="Students"
                                asp-all-route-data="Model.Filter.ToRouteValues(pageNumber)">@pageNumber</a>
                         </li>
                     }
 
                     <li class="page-item @(Model.Page.Current == Model.Page.TotalPages ? "disabled" : "")">
-                        <a class="page-link" asp-action="Teachers"
+                        <a class="page-link" asp-action="Students"
                            asp-all-route-data="Model.Filter.ToRouteValues(Model.Page.Current + 1)">Next</a>
                     </li>
                 </ul>
