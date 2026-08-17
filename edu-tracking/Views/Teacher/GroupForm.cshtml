@@ -2,6 +2,8 @@
 @{
     ViewData["Title"] = Model.Heading;
     ViewData["ActiveNav"] = "schedule";
+    ViewData["CurrentUserName"] = Model.CurrentUserName;
+    ViewData["PanelSubtitle"] = Model.Subjects;
 
     // Once a student is in, the schedule is fixed: those fields are shown as text and
     // posted back unchanged, so the form still round-trips without inventing values.

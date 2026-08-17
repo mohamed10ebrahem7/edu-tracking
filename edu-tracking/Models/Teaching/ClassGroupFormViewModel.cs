@@ -48,6 +48,9 @@ public class ClassGroupFormViewModel
 
     // ---------- filled in for display, never trusted from the post ----------
 
+    public string CurrentUserName { get; set; } = "Teacher";
+    public string? Subjects { get; set; }
+
     public IReadOnlyList<SubjectChoice> AvailableSubjects { get; set; } = [];
 
     /// <summary>Working hours per day, so the teacher can see what a class must fit inside.</summary>

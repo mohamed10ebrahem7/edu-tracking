@@ -146,6 +146,12 @@ public class TeacherAvailabilityService(ApplicationDbContext db)
         }
 
         var clock = await ClockAsync(teacherId);
+
+        if (input.To < clock.Today())
+        {
+            return GroupResult.Fail("Those dates have already passed. Time off only affects classes created from now on.");
+        }
+
         var startUtc = clock.StartOfDayUtc(input.From);
         var endUtc = clock.StartOfDayUtc(input.To.AddDays(1));
 

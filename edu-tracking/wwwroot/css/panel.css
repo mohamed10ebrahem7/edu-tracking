@@ -450,8 +450,10 @@ body.sidebar-hidden .panel-main { margin-left: 0; }
 
 .schedule-legend span { display: inline-flex; align-items: center; gap: 5px; }
 
+/* The links filling a cell, never the cell itself: a state class on a td must stay
+   presentational, since laying it out as anything but a table-cell breaks the row. */
 .cell-class,
-.cell-free {
+.cell-add {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -460,14 +462,14 @@ body.sidebar-hidden .panel-main { margin-left: 0; }
     color: inherit;
 }
 
-.cell-free {
+.cell-add {
     align-items: center;
     justify-content: center;
     gap: 2px;
     color: var(--panel-primary);
 }
 
-.cell-free:hover { background: var(--panel-primary-soft); border-radius: 11px; }
+.cell-add:hover { background: var(--panel-primary-soft); border-radius: 11px; }
 .cell-plus { font-size: 19px; line-height: 1; font-weight: 600; }
 
 .cell-title { font-weight: 600; font-size: 12.5px; line-height: 1.2; }

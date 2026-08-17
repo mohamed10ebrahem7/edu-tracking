@@ -32,7 +32,7 @@ public class TeacherController(
     [HttpGet]
     public async Task<IActionResult> CreateGroup(DateOnly? date, TimeOnly? start, TimeOnly? end)
     {
-        return View("GroupForm", await groups.NewFormAsync(TeacherId, date, start, end));
+        return View("GroupForm", await groups.NewFormAsync(TeacherId, date, start, end, CurrentUserName));
     }
 
     [HttpPost]
@@ -58,7 +58,7 @@ public class TeacherController(
     [HttpGet]
     public async Task<IActionResult> EditGroup(int id)
     {
-        var form = await groups.GetForEditAsync(TeacherId, id);
+        var form = await groups.GetForEditAsync(TeacherId, id, CurrentUserName);
         if (form is null)
         {
             return NotFound();
@@ -181,7 +181,7 @@ public class TeacherController(
 
     private async Task<IActionResult> RedisplayAsync(ClassGroupFormViewModel form)
     {
-        return View("GroupForm", await groups.FillChoicesAsync(TeacherId, form));
+        return View("GroupForm", await groups.FillChoicesAsync(TeacherId, form, CurrentUserName));
     }
 
     private void Report(GroupResult result)

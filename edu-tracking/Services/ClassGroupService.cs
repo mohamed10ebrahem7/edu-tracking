@@ -32,7 +32,12 @@ public class ClassGroupService(ApplicationDbContext db, AccountAdminService acco
             .ToListAsync();
 
     /// <summary>Prefilled from the free cell the teacher clicked, when they came that way.</summary>
-    public async Task<ClassGroupFormViewModel> NewFormAsync(Guid teacherId, DateOnly? date, TimeOnly? start, TimeOnly? end)
+    public async Task<ClassGroupFormViewModel> NewFormAsync(
+        Guid teacherId,
+        DateOnly? date,
+        TimeOnly? start,
+        TimeOnly? end,
+        string currentUserName)
     {
         var clock = await ClockAsync(teacherId);
         var today = clock.Today();
@@ -53,10 +58,10 @@ public class ClassGroupService(ApplicationDbContext db, AccountAdminService acco
             day.EndTime = end;
         }
 
-        return await FillChoicesAsync(teacherId, form);
+        return await FillChoicesAsync(teacherId, form, currentUserName);
     }
 
-    public async Task<ClassGroupFormViewModel?> GetForEditAsync(Guid teacherId, int id)
+    public async Task<ClassGroupFormViewModel?> GetForEditAsync(Guid teacherId, int id, string currentUserName)
     {
         var group = await db.ClassGroups
             .AsNoTracking()
@@ -107,17 +112,27 @@ public class ClassGroupService(ApplicationDbContext db, AccountAdminService acco
             day.EndTime = row.EndTime;
         }
 
-        return await FillChoicesAsync(teacherId, form);
+        return await FillChoicesAsync(teacherId, form, currentUserName);
     }
 
-    public async Task<ClassGroupFormViewModel> FillChoicesAsync(Guid teacherId, ClassGroupFormViewModel form)
+    public async Task<ClassGroupFormViewModel> FillChoicesAsync(
+        Guid teacherId,
+        ClassGroupFormViewModel form,
+        string currentUserName)
     {
         if (form.Days.Count == 0)
         {
             form.Days = ClassGroupFormViewModel.EmptyWeek();
         }
 
+        form.CurrentUserName = currentUserName;
         form.AvailableSubjects = await GetSubjectOptionsAsync(teacherId);
+
+        // The topbar line and the picker are the same list, so one query answers both.
+        form.Subjects = form.AvailableSubjects.Count == 0
+            ? null
+            : string.Join(", ", form.AvailableSubjects.Select(s => s.Name));
+
         form.WorkingHours = await db.TeacherAvailabilities
             .Where(a => a.TeacherId == teacherId && a.IsActive)
             .OrderBy(a => a.DayOfWeek).ThenBy(a => a.StartTime)
