@@ -42,6 +42,10 @@ builder.Services.AddScoped<StudentAdminService>();
 builder.Services.AddScoped<ParentAdminService>();
 builder.Services.AddScoped<AdminUserService>();
 
+builder.Services.AddScoped<ClassGroupService>();
+builder.Services.AddScoped<TeacherScheduleService>();
+builder.Services.AddScoped<TeacherAvailabilityService>();
+
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
