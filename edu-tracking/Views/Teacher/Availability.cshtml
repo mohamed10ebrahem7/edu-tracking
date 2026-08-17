@@ -1,0 +1,166 @@
+@model AvailabilityPageViewModel
+@{
+    ViewData["Title"] = "Availability";
+    ViewData["ActiveNav"] = "availability";
+    ViewData["CurrentUserName"] = Model.CurrentUserName;
+    ViewData["PanelSubtitle"] = Model.Subjects;
+}
+
+<div class="mb-3">
+    <div class="crumbs mb-1">
+        <a asp-action="Schedule">My Schedule</a> / Availability
+    </div>
+    <h1 class="h5 fw-bold mb-0">Availability</h1>
+    <span class="text-secondary small">
+        Working hours say when you teach, in @Model.ZoneName. Nothing is booked here: they decide where a
+        class may be placed, and any hour left over shows on the schedule as an available slot.
+    </span>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card-soft">
+            <div class="card-soft-header pb-3">
+                <h2 class="card-soft-title">Weekly working hours</h2>
+            </div>
+
+            @if (Model.WorkingHours.Count == 0)
+            {
+                <p class="text-secondary small px-3 pb-3 mb-0">
+                    None yet. Add your first window below and the schedule starts filling in.
+                </p>
+            }
+            else
+            {
+                <table class="panel-table">
+                    <thead>
+                        <tr>
+                            <th>Day</th>
+                            <th>Hours</th>
+                            <th>Slot length</th>
+                            <th>Classes inside</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var window in Model.WorkingHours)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@window.DayOfWeek</td>
+                                <td>@window.TimeLabel</td>
+                                <td class="text-secondary">@window.SlotMinutes min</td>
+                                <td>
+                                    @if (window.ClassCount == 0)
+                                    {
+                                        <span class="text-secondary">—</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-soft tone-purple">@window.ClassCount</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <form asp-action="RemoveWorkingHours" method="post"
+                                          onsubmit="return confirm('Remove these working hours?');">
+                                        <input type="hidden" name="id" value="@window.Id" />
+                                        <button class="btn btn-sm btn-panel-outline" type="submit">Remove</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+            <form asp-action="AddWorkingHours" method="post" class="toolbar border-top border-0">
+                <div>
+                    <label class="form-label small fw-semibold" for="DayOfWeek">Day</label>
+                    <select class="form-select" id="DayOfWeek" name="DayOfWeek">
+                        @foreach (var day in Enum.GetValues<DayOfWeek>())
+                        {
+                            <option value="@day" selected="@(day == Model.NewWindow.DayOfWeek)">@day</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label small fw-semibold" for="StartTime">From</label>
+                    <input class="form-control" id="StartTime" name="StartTime" type="time"
+                           value="@Model.NewWindow.StartTime.ToString("HH\\:mm")" />
+                </div>
+                <div>
+                    <label class="form-label small fw-semibold" for="EndTime">To</label>
+                    <input class="form-control" id="EndTime" name="EndTime" type="time"
+                           value="@Model.NewWindow.EndTime.ToString("HH\\:mm")" />
+                </div>
+                <div>
+                    <label class="form-label small fw-semibold" for="SlotMinutes">Slot length</label>
+                    <input class="form-control" id="SlotMinutes" name="SlotMinutes" type="number"
+                           min="15" max="240" step="15" value="@Model.NewWindow.SlotMinutes" />
+                </div>
+                <button class="btn btn-panel align-self-end" type="submit">Add hours</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card-soft">
+            <div class="card-soft-header pb-3">
+                <h2 class="card-soft-title">Time off</h2>
+            </div>
+
+            @if (Model.TimeOff.Count == 0)
+            {
+                <p class="text-secondary small px-3 pb-3 mb-0">
+                    Nothing booked off. Dates you add here are skipped when a class is created.
+                </p>
+            }
+            else
+            {
+                <ul class="tidy-list">
+                    @foreach (var off in Model.TimeOff)
+                    {
+                        <li>
+                            <span class="icon-bubble-sm icon-bubble tone-orange"><i class="bi bi-airplane"></i></span>
+                            <div>
+                                <div class="fw-semibold">
+                                    @off.From.ToString("MMM d")
+                                    @if (off.To != off.From)
+                                    {
+                                        <text>- @off.To.ToString("MMM d, yyyy")</text>
+                                    }
+                                    else
+                                    {
+                                        <text>, @off.From.Year</text>
+                                    }
+                                </div>
+                                <div class="text-secondary small">@(off.Reason ?? "No reason given")</div>
+                            </div>
+                            <form class="ms-auto" asp-action="RemoveTimeOff" method="post">
+                                <input type="hidden" name="id" value="@off.Id" />
+                                <button class="btn btn-sm btn-panel-outline" type="submit">Remove</button>
+                            </form>
+                        </li>
+                    }
+                </ul>
+            }
+
+            <form asp-action="AddTimeOff" method="post" class="toolbar border-0 border-top">
+                <div>
+                    <label class="form-label small fw-semibold" for="From">First day</label>
+                    <input class="form-control" id="From" name="From" type="date"
+                           value="@Model.NewTimeOff.From.ToString("yyyy-MM-dd")" />
+                </div>
+                <div>
+                    <label class="form-label small fw-semibold" for="To">Last day</label>
+                    <input class="form-control" id="To" name="To" type="date"
+                           value="@Model.NewTimeOff.To.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="flex-grow-1">
+                    <label class="form-label small fw-semibold" for="Reason">Reason</label>
+                    <input class="form-control w-100" id="Reason" name="Reason" placeholder="Optional" />
+                </div>
+                <button class="btn btn-panel align-self-end" type="submit">Add time off</button>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,186 @@
+@model GroupDetailViewModel
+@{
+    ViewData["Title"] = Model.Name;
+    ViewData["ActiveNav"] = "schedule";
+    ViewData["CurrentUserName"] = Model.CurrentUserName;
+    ViewData["PanelSubtitle"] = Model.Subjects;
+
+    var active = Model.Roster.Where(m => m.IsActive).ToList();
+    var past = Model.Roster.Where(m => !m.IsActive).ToList();
+}
+
+<div class="d-flex flex-wrap align-items-start gap-2 mb-3">
+    <div>
+        <div class="crumbs mb-1">
+            <a asp-action="Schedule">My Schedule</a> / @Model.Subject
+        </div>
+        <h1 class="h5 fw-bold mb-1">@Model.Name</h1>
+        <span class="text-secondary small">
+            @Model.Detail · @Model.Seats students ·
+            @Model.StartDate.ToString("MMM d") - @Model.EndDate.ToString("MMM d, yyyy")
+            @(Model.RepeatsWeekly ? " · weekly" : " · one week only")
+        </span>
+    </div>
+
+    <div class="ms-auto d-flex gap-2">
+        <span class="badge-soft tone-@(Model.IsFull ? "gray" : Model.IsOpenForEnrollment ? "green" : "orange") align-self-center">
+            @(Model.IsFull ? "Full" : Model.IsOpenForEnrollment ? "Open to join" : "Closed to new students")
+        </span>
+        <a class="btn btn-panel-outline" asp-action="EditGroup" asp-route-id="@Model.Id">Edit class</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        @if (Model.PendingRequests.Count > 0)
+        {
+            <div class="card-soft mb-3">
+                <div class="card-soft-header pb-3">
+                    <h2 class="card-soft-title">Waiting to join (@Model.PendingRequests.Count)</h2>
+                </div>
+
+                <ul class="tidy-list">
+                    @foreach (var request in Model.PendingRequests)
+                    {
+                        <li>
+                            <span class="avatar-initials tone-purple">@Ui.Initials(request.StudentName)</span>
+                            <div>
+                                <div class="fw-semibold">@request.StudentName</div>
+                                <div class="text-secondary small">
+                                    @Ui.GradeLabel(request.Grade) · asked @request.RequestedAtUtc.ToString("MMM d")
+                                    @if (!string.IsNullOrWhiteSpace(request.Message))
+                                    {
+                                        <text>· “@request.Message”</text>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="ms-auto d-flex gap-2">
+                                <form asp-action="ApproveRequest" method="post">
+                                    <input type="hidden" name="id" value="@request.Id" />
+                                    <input type="hidden" name="groupId" value="@Model.Id" />
+                                    <button class="btn btn-sm btn-panel" type="submit" disabled="@Model.IsFull">Approve</button>
+                                </form>
+                                <form asp-action="DeclineRequest" method="post">
+                                    <input type="hidden" name="id" value="@request.Id" />
+                                    <input type="hidden" name="groupId" value="@Model.Id" />
+                                    <button class="btn btn-sm btn-panel-outline" type="submit">Decline</button>
+                                </form>
+                            </div>
+                        </li>
+                    }
+                </ul>
+
+                @if (Model.IsFull)
+                {
+                    <p class="text-secondary small px-3 pb-3 mb-0">
+                        The class is full. Raise the limit on the class to let anyone else in.
+                    </p>
+                }
+            </div>
+        }
+
+        <div class="card-soft">
+            <div class="card-soft-header pb-3">
+                <h2 class="card-soft-title">Students (@Model.Seats)</h2>
+            </div>
+
+            @if (active.Count == 0)
+            {
+                <p class="text-secondary small px-3 pb-3 mb-0">
+                    Nobody has joined yet. Students ask to join, and their request shows up here.
+                </p>
+            }
+            else
+            {
+                <ul class="tidy-list">
+                    @foreach (var member in active)
+                    {
+                        <li>
+                            <span class="avatar-initials tone-green">@Ui.Initials(member.Name)</span>
+                            <div>
+                                <div class="fw-semibold">@member.Name</div>
+                                <div class="text-secondary small">
+                                    @Ui.GradeLabel(member.Grade) · joined @member.JoinedAtUtc.ToString("MMM d, yyyy")
+                                </div>
+                            </div>
+
+                            <form class="ms-auto" asp-action="RemoveMember" method="post"
+                                  onsubmit="return confirm('Remove @member.Name from this class?');">
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <input type="hidden" name="studentId" value="@member.StudentId" />
+                                <button class="btn btn-sm btn-panel-outline" type="submit">Remove</button>
+                            </form>
+                        </li>
+                    }
+                </ul>
+            }
+
+            @if (past.Count > 0)
+            {
+                <div class="px-3 py-2 border-top">
+                    <span class="text-secondary small">
+                        Previously in this class:
+                        @string.Join(", ", past.Select(m => $"{m.Name} ({m.Status})"))
+                    </span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card-soft p-3 mb-3">
+            <h2 class="card-soft-title mb-2">Weekly pattern</h2>
+            <ul class="list-unstyled small mb-0">
+                @foreach (var row in Model.Schedule)
+                {
+                    <li class="d-flex align-items-center gap-2 py-1">
+                        <i class="bi bi-calendar-week text-secondary"></i> @row
+                    </li>
+                }
+            </ul>
+        </div>
+
+        <div class="card-soft">
+            <div class="card-soft-header pb-3">
+                <h2 class="card-soft-title">Meetings (@Model.Occurrences.Count)</h2>
+            </div>
+
+            <table class="panel-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var occurrence in Model.Occurrences)
+                    {
+                        <tr>
+                            <td class="text-nowrap">@occurrence.Date.ToString("ddd, MMM d")</td>
+                            <td class="text-secondary text-nowrap">@occurrence.TimeLabel</td>
+                            <td>
+                                <span class="badge-soft tone-@(occurrence.Status == SlotStatus.Unavailable ? "gray" : "green")">
+                                    @(occurrence.Status == SlotStatus.Unavailable ? "Closed" : "Scheduled")
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                @if (occurrence.CanCancel && Model.Members == 0)
+                                {
+                                    <form asp-action="CloseOccurrence" method="post"
+                                          onsubmit="return confirm('Close this meeting?');">
+                                        <input type="hidden" name="id" value="@occurrence.SlotId" />
+                                        <input type="hidden" name="groupId" value="@Model.Id" />
+                                        <button class="btn btn-sm btn-panel-outline" type="submit">Close</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

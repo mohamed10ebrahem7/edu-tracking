@@ -1,0 +1,264 @@
+@model ClassGroupFormViewModel
+@{
+    ViewData["Title"] = Model.Heading;
+    ViewData["ActiveNav"] = "schedule";
+
+    // Once a student is in, the schedule is fixed: those fields are shown as text and
+    // posted back unchanged, so the form still round-trips without inventing values.
+    var fixedUp = Model.HasMembers;
+}
+
+<div class="crumbs mb-2">
+    <a asp-action="Schedule">My Schedule</a> / @Model.Heading
+</div>
+
+<h1 class="h5 mb-3">@Model.Heading</h1>
+
+<form method="post" asp-action="@(Model.IsNew ? "CreateGroup" : "EditGroup")">
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+    @if (Model.AvailableSubjects.Count == 0)
+    {
+        <div class="alert alert-warning">
+            You are not assigned to any subject yet, so a class cannot be created. Ask an admin to add your subjects.
+        </div>
+    }
+
+    @if (fixedUp)
+    {
+        <div class="alert alert-info">
+            Students have already joined this class, so its subject, grade, type and times are fixed.
+            You can still rename it, raise the limit, or close it to new students.
+        </div>
+    }
+
+    <div class="row g-3">
+        <div class="col-lg-7">
+            <div class="card-soft p-3">
+                <h2 class="card-soft-title mb-3">What is being taught</h2>
+
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label class="form-label" asp-for="SubjectId"></label>
+                        @if (fixedUp)
+                        {
+                            <input type="hidden" asp-for="SubjectId" />
+                            <p class="form-control-plaintext">
+                                @Model.AvailableSubjects.FirstOrDefault(s => s.Id == Model.SubjectId)?.Name
+                            </p>
+                        }
+                        else
+                        {
+                            <select class="form-select" asp-for="SubjectId">
+                                <option value="0">Choose a subject</option>
+                                @foreach (var subject in Model.AvailableSubjects)
+                                {
+                                    <option value="@subject.Id">@subject.Name</option>
+                                }
+                            </select>
+                            <span class="text-danger small" asp-validation-for="SubjectId"></span>
+                        }
+                    </div>
+
+                    <div class="col-sm-3">
+                        <label class="form-label" asp-for="GradeLevel"></label>
+                        @if (fixedUp)
+                        {
+                            <input type="hidden" asp-for="GradeLevel" />
+                            <p class="form-control-plaintext">@Ui.GradeLabel(Model.GradeLevel)</p>
+                        }
+                        else
+                        {
+                            <select class="form-select" asp-for="GradeLevel">
+                                @foreach (var grade in GradeChoice.All)
+                                {
+                                    <option value="@grade.Value">@grade.Label</option>
+                                }
+                            </select>
+                        }
+                    </div>
+
+                    <div class="col-sm-3">
+                        <label class="form-label" asp-for="Kind"></label>
+                        @if (fixedUp)
+                        {
+                            <input type="hidden" asp-for="Kind" />
+                            <p class="form-control-plaintext">@Model.Kind</p>
+                        }
+                        else
+                        {
+                            <select class="form-select" asp-for="Kind">
+                                @foreach (var kind in Enum.GetValues<ClassKind>())
+                                {
+                                    <option value="@kind">@kind</option>
+                                }
+                            </select>
+                        }
+                    </div>
+
+                    <div class="col-sm-8">
+                        <label class="form-label" asp-for="Title"></label>
+                        <input class="form-control" asp-for="Title" placeholder="Shown instead of the subject name" />
+                        <span class="text-danger small" asp-validation-for="Title"></span>
+                    </div>
+
+                    <div class="col-sm-4">
+                        <label class="form-label" asp-for="MaxStudents"></label>
+                        <input class="form-control" asp-for="MaxStudents" type="number" min="1" max="@ClassGroup.MaxAllowedStudents" />
+                        <div class="form-text">1 makes it a one-to-one class.</div>
+                        <span class="text-danger small" asp-validation-for="MaxStudents"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-soft p-3 mt-3">
+                <h2 class="card-soft-title mb-1">When it meets</h2>
+                <p class="text-secondary small">
+                    Tick each day the class runs. Times are your local wall clock and must sit inside your
+                    working hours.
+                </p>
+
+                <table class="panel-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 42%">Day</th>
+                            <th>From</th>
+                            <th>To</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < Model.Days.Count; i++)
+                        {
+                            var day = Model.Days[i];
+                            <tr>
+                                <td>
+                                    <input type="hidden" asp-for="Days[i].DayOfWeek" />
+                                    @if (fixedUp)
+                                    {
+                                        <input type="hidden" asp-for="Days[i].Selected" />
+                                        <span class="@(day.Selected ? "fw-semibold" : "text-secondary")">@day.Name</span>
+                                    }
+                                    else
+                                    {
+                                        <div class="form-check mb-0">
+                                            <input class="form-check-input" type="checkbox" asp-for="Days[i].Selected" />
+                                            <label class="form-check-label" asp-for="Days[i].Selected">@day.Name</label>
+                                        </div>
+                                    }
+                                </td>
+                                <td>
+                                    @if (fixedUp)
+                                    {
+                                        <input type="hidden" asp-for="Days[i].StartTime" />
+                                        <span class="text-secondary">@(day.StartTime?.ToString("HH\\:mm") ?? "—")</span>
+                                    }
+                                    else
+                                    {
+                                        <input class="form-control" type="time" asp-for="Days[i].StartTime" />
+                                    }
+                                </td>
+                                <td>
+                                    @if (fixedUp)
+                                    {
+                                        <input type="hidden" asp-for="Days[i].EndTime" />
+                                        <span class="text-secondary">@(day.EndTime?.ToString("HH\\:mm") ?? "—")</span>
+                                    }
+                                    else
+                                    {
+                                        <input class="form-control" type="time" asp-for="Days[i].EndTime" />
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card-soft p-3">
+                <h2 class="card-soft-title mb-3">How long it runs</h2>
+
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label class="form-label" asp-for="StartDate"></label>
+                        @if (fixedUp)
+                        {
+                            <input type="hidden" asp-for="StartDate" />
+                            <p class="form-control-plaintext">@Model.StartDate.ToString("MMM d, yyyy")</p>
+                        }
+                        else
+                        {
+                            <input class="form-control" asp-for="StartDate" type="date" />
+                        }
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" asp-for="EndDate"></label>
+                        @if (fixedUp)
+                        {
+                            <input type="hidden" asp-for="EndDate" />
+                            <p class="form-control-plaintext">@Model.EndDate.ToString("MMM d, yyyy")</p>
+                        }
+                        else
+                        {
+                            <input class="form-control" asp-for="EndDate" type="date" />
+                        }
+                    </div>
+                </div>
+
+                @if (fixedUp)
+                {
+                    <input type="hidden" asp-for="RepeatsWeekly" />
+                    <p class="small text-secondary mt-3 mb-0">
+                        @(Model.RepeatsWeekly ? "Repeats every week." : "Runs in the first week only.")
+                    </p>
+                }
+                else
+                {
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="checkbox" asp-for="RepeatsWeekly" />
+                        <label class="form-check-label" asp-for="RepeatsWeekly"></label>
+                        <div class="form-text">Untick for a one-off: only the first week is scheduled.</div>
+                    </div>
+                }
+
+                <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" asp-for="IsOpenForEnrollment" />
+                    <label class="form-check-label" asp-for="IsOpenForEnrollment"></label>
+                    <div class="form-text">Students can ask to join while there is room.</div>
+                </div>
+            </div>
+
+            <div class="card-soft p-3 mt-3">
+                <h2 class="card-soft-title mb-2">Your working hours</h2>
+
+                @if (Model.WorkingHours.Count == 0)
+                {
+                    <p class="text-secondary small mb-2">
+                        You have none set, so a class cannot be placed anywhere yet.
+                    </p>
+                    <a class="btn btn-panel-outline" asp-action="Availability">Set working hours</a>
+                }
+                else
+                {
+                    <ul class="list-unstyled small mb-0">
+                        @foreach (var window in Model.WorkingHours)
+                        {
+                            <li class="d-flex align-items-center gap-2 py-1">
+                                <i class="bi bi-clock text-secondary"></i> @window
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-3">
+        <button class="btn btn-panel" type="submit" disabled="@(Model.AvailableSubjects.Count == 0)">
+            @(Model.IsNew ? "Create class" : "Save changes")
+        </button>
+        <a class="btn btn-panel-outline" asp-action="Schedule">Cancel</a>
+    </div>
+</form>
