@@ -31,7 +31,7 @@
         </a>
         <div class="collapse show" id="usersMenu">
             <ul class="admin-subnav">
-                <li><a class="@IsActive("admins")" href="#">Admins</a></li>
+                <li><a class="@IsActive("admins")" asp-controller="Admin" asp-action="Admins">Admins</a></li>
                 <li><a class="@IsActive("teachers")" asp-controller="Admin" asp-action="Teachers">Teachers</a></li>
                 <li><a class="@IsActive("students")" asp-controller="Admin" asp-action="Students">Students</a></li>
                 <li><a class="@IsActive("parents")" href="#">Parents</a></li>

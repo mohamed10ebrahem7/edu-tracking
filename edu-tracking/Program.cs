@@ -39,6 +39,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddScoped<AccountAdminService>();
 builder.Services.AddScoped<TeacherAdminService>();
 builder.Services.AddScoped<StudentAdminService>();
+builder.Services.AddScoped<AdminUserService>();
 
 builder.Services.AddControllersWithViews();
 

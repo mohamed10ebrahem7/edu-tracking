@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using edu_tracking.Domain;
 using edu_tracking.Domain.Identity;
 using edu_tracking.Models.Admin;
@@ -11,6 +12,7 @@ namespace edu_tracking.Controllers;
 public class AdminController(
     TeacherAdminService teachers,
     StudentAdminService students,
+    AdminUserService admins,
     AccountAdminService accounts) : Controller
 {
     // The dashboard still shows placeholder content from AdminDashboardData.
@@ -221,6 +223,101 @@ public class AdminController(
         return RedirectToAction(nameof(Students));
     }
 
+    // ---------- admins ----------
+
+    [HttpGet]
+    public async Task<IActionResult> Admins(string? search, string? status, int page = 1)
+    {
+        var filter = new AdminFilter
+        {
+            Search = search,
+            Status = status,
+            Page = page
+        };
+
+        return View(await admins.GetPageAsync(filter, CurrentUserId, CurrentUserName));
+    }
+
+    [HttpGet]
+    public IActionResult CreateAdmin()
+    {
+        return View("AdminForm", new AdminFormViewModel());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateAdmin(AdminFormViewModel form)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View("AdminForm", form);
+        }
+
+        var result = await admins.CreateAsync(form);
+        if (!result.Succeeded)
+        {
+            ModelState.AddModelError(string.Empty, result.Error!);
+            return View("AdminForm", form);
+        }
+
+        TempData["Success"] = $"{form.FullName} was created. Temporary password: {result.TemporaryPassword}";
+        return RedirectToAction(nameof(Admins));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> EditAdmin(Guid id)
+    {
+        var form = await admins.GetForEditAsync(id);
+        if (form is null)
+        {
+            return NotFound();
+        }
+
+        return View("AdminForm", form);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditAdmin(AdminFormViewModel form)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View("AdminForm", form);
+        }
+
+        var result = await admins.UpdateAsync(form);
+        if (!result.Succeeded)
+        {
+            ModelState.AddModelError(string.Empty, result.Error!);
+            return View("AdminForm", form);
+        }
+
+        TempData["Success"] = $"{form.FullName} was updated.";
+        return RedirectToAction(nameof(Admins));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetAdminActive(Guid id, bool isActive)
+    {
+        var name = await accounts.GetNameAsync(id) ?? "The admin";
+        var result = await admins.SetActiveAsync(id, isActive, CurrentUserId);
+
+        Report(result, isActive ? $"{name} was reactivated." : $"{name} was deactivated.");
+        return RedirectToAction(nameof(Admins));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetAdminPassword(Guid id)
+    {
+        var name = await accounts.GetNameAsync(id) ?? "The admin";
+        var result = await admins.ResetPasswordAsync(id, CurrentUserId);
+
+        Report(result, $"New temporary password for {name}: {result.TemporaryPassword}");
+        return RedirectToAction(nameof(Admins));
+    }
+
     // ---------- shared ----------
 
     private async Task<IActionResult> RedisplayTeacherAsync(TeacherFormViewModel form)
@@ -248,4 +345,8 @@ public class AdminController(
     }
 
     private string CurrentUserName => User.Identity?.Name ?? "Admin";
+
+    private Guid CurrentUserId => Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id)
+        ? id
+        : Guid.Empty;
 }

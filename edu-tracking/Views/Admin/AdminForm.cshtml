@@ -1,0 +1,88 @@
+@model AdminFormViewModel
+@{
+    var isEdit = Model.IsEdit;
+    ViewData["Title"] = isEdit ? "Edit admin" : "Add admin";
+    ViewData["ActiveNav"] = "admins";
+}
+
+<div class="mb-3">
+    <div class="crumbs mb-1">
+        <a asp-action="Index">Dashboard</a> / <a asp-action="Admins">Admins</a> / @(isEdit ? "Edit" : "New")
+    </div>
+    <h1 class="h5 fw-bold mb-0">@(isEdit ? $"Edit {Model.FullName}" : "Add New Admin")</h1>
+    <span class="text-secondary small">
+        @(isEdit
+            ? "Update the account details."
+            : "Creates a login with full access to this panel.")
+    </span>
+</div>
+
+<form asp-action="@(isEdit ? "EditAdmin" : "CreateAdmin")" method="post" class="card-soft p-4">
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+    @if (!isEdit)
+    {
+        <div class="alert alert-warning py-2 small">
+            <i class="bi bi-shield-exclamation me-1"></i>
+            An admin can manage every account in the system, including other admins.
+        </div>
+    }
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="FullName" class="form-label small fw-semibold"></label>
+            <input asp-for="FullName" class="form-control" placeholder="Mohamed Eid" />
+            <span asp-validation-for="FullName" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="UserName" class="form-label small fw-semibold"></label>
+            @if (isEdit)
+            {
+                @* The login name is fixed so an admin's sign-in never changes underneath them. *@
+                <input class="form-control" value="@Model.UserName" disabled />
+                <input type="hidden" asp-for="UserName" />
+                <span class="text-secondary small">The username cannot be changed.</span>
+            }
+            else
+            {
+                <input asp-for="UserName" class="form-control" placeholder="mohamed.eid" />
+                <span asp-validation-for="UserName" class="text-danger small"></span>
+            }
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Email" class="form-label small fw-semibold"></label>
+            <input asp-for="Email" class="form-control" placeholder="admin@edu-tracking.local" />
+            <span asp-validation-for="Email" class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Phone" class="form-label small fw-semibold"></label>
+            <input asp-for="Phone" class="form-control" placeholder="+20 100 000 0000" />
+            <span asp-validation-for="Phone" class="text-danger small"></span>
+        </div>
+
+        @if (!isEdit)
+        {
+            <div class="col-md-6">
+                <label asp-for="TemporaryPassword" class="form-label small fw-semibold"></label>
+                <input asp-for="TemporaryPassword" class="form-control" placeholder="Leave blank to generate one" />
+                <span asp-validation-for="TemporaryPassword" class="text-danger small"></span>
+                <span class="text-secondary small d-block">
+                    The admin is asked to change it after signing in.
+                </span>
+            </div>
+        }
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <a class="btn btn-admin-outline" asp-action="Admins">Cancel</a>
+        <button class="btn btn-admin" type="submit">@(isEdit ? "Save changes" : "Create admin")</button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
