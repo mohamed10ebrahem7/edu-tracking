@@ -12,6 +12,7 @@ namespace edu_tracking.Controllers;
 public class AdminController(
     TeacherAdminService teachers,
     StudentAdminService students,
+    ParentAdminService parents,
     AdminUserService admins,
     AccountAdminService accounts) : Controller
 {
@@ -223,6 +224,107 @@ public class AdminController(
         return RedirectToAction(nameof(Students));
     }
 
+    // ---------- parents ----------
+
+    [HttpGet]
+    public async Task<IActionResult> Parents(string? search, string? status, bool? withoutChildren, int page = 1)
+    {
+        var filter = new ParentFilter
+        {
+            Search = search,
+            Status = status,
+            WithoutChildren = withoutChildren,
+            Page = page
+        };
+
+        return View(await parents.GetPageAsync(filter, CurrentUserName));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CreateParent()
+    {
+        var form = new ParentFormViewModel
+        {
+            AvailableStudents = await parents.GetStudentOptionsAsync()
+        };
+
+        return View("ParentForm", form);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateParent(ParentFormViewModel form)
+    {
+        if (!ModelState.IsValid)
+        {
+            return await RedisplayParentAsync(form);
+        }
+
+        var result = await parents.CreateAsync(form);
+        if (!result.Succeeded)
+        {
+            ModelState.AddModelError(string.Empty, result.Error!);
+            return await RedisplayParentAsync(form);
+        }
+
+        TempData["Success"] = $"{form.FullName} was created. Temporary password: {result.TemporaryPassword}";
+        return RedirectToAction(nameof(Parents));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> EditParent(Guid id)
+    {
+        var form = await parents.GetForEditAsync(id);
+        if (form is null)
+        {
+            return NotFound();
+        }
+
+        return View("ParentForm", form);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditParent(ParentFormViewModel form)
+    {
+        if (!ModelState.IsValid)
+        {
+            return await RedisplayParentAsync(form);
+        }
+
+        var result = await parents.UpdateAsync(form);
+        if (!result.Succeeded)
+        {
+            ModelState.AddModelError(string.Empty, result.Error!);
+            return await RedisplayParentAsync(form);
+        }
+
+        TempData["Success"] = $"{form.FullName} was updated.";
+        return RedirectToAction(nameof(Parents));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetParentActive(Guid id, bool isActive)
+    {
+        var name = await accounts.GetNameAsync(id) ?? "The parent";
+        var result = await accounts.SetActiveAsync(id, isActive);
+
+        Report(result, isActive ? $"{name} was reactivated." : $"{name} was deactivated.");
+        return RedirectToAction(nameof(Parents));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetParentPassword(Guid id)
+    {
+        var name = await accounts.GetNameAsync(id) ?? "The parent";
+        var result = await accounts.ResetPasswordAsync(id);
+
+        Report(result, $"New temporary password for {name}: {result.TemporaryPassword}");
+        return RedirectToAction(nameof(Parents));
+    }
+
     // ---------- admins ----------
 
     [HttpGet]
@@ -330,6 +432,12 @@ public class AdminController(
     {
         form.AvailableParents = await students.GetParentOptionsAsync();
         return View("StudentForm", form);
+    }
+
+    private async Task<IActionResult> RedisplayParentAsync(ParentFormViewModel form)
+    {
+        form.AvailableStudents = await parents.GetStudentOptionsAsync();
+        return View("ParentForm", form);
     }
 
     private void Report(AccountResult result, string success)
