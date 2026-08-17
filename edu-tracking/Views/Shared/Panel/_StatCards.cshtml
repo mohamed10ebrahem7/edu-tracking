@@ -14,8 +14,15 @@
                 </div>
                 @if (!string.IsNullOrEmpty(card.Trend))
                 {
-                    <div class="stat-trend mt-2">
-                        <i class="bi bi-arrow-up-short"></i>@card.Trend
+                    @* A leading + means it is a movement, so it gets the arrow and the green. *@
+                    var isMovement = card.Trend.StartsWith('+');
+
+                    <div class="mt-2 @(isMovement ? "stat-trend" : "stat-note")">
+                        @if (isMovement)
+                        {
+                            <i class="bi bi-arrow-up-short"></i>
+                        }
+                        @card.Trend
                     </div>
                 }
             </div>

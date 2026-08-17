@@ -1,0 +1,165 @@
+@model ScheduleWeekViewModel
+@{
+    ViewData["Title"] = "My Schedule";
+    ViewData["ActiveNav"] = "schedule";
+    ViewData["CurrentUserName"] = Model.CurrentUserName;
+    ViewData["PanelSubtitle"] = Model.Subjects;
+}
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <div>
+        <h1 class="h5 mb-1">My Schedule</h1>
+        <p class="text-secondary small mb-0">
+            Times shown in @Model.ZoneName. Classes you create appear here for every date they fall on.
+        </p>
+    </div>
+
+    <div class="ms-auto d-flex gap-2">
+        <a class="btn btn-panel-outline" asp-action="Availability">
+            <i class="bi bi-clock-history"></i> Manage availability
+        </a>
+        <a class="btn btn-panel" asp-action="CreateGroup">
+            <i class="bi bi-plus-lg"></i> New class
+        </a>
+    </div>
+</div>
+
+<partial name="Panel/_StatCards" model="Model.Stats" />
+
+<div class="card-soft mt-3">
+    <div class="toolbar">
+        <div class="btn-group">
+            <a class="btn btn-panel-outline" asp-action="Schedule"
+               asp-route-week="@Model.PreviousWeekStart.ToString("yyyy-MM-dd")" aria-label="Previous week">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+            <a class="btn btn-panel-outline" asp-action="Schedule"
+               asp-route-week="@Model.NextWeekStart.ToString("yyyy-MM-dd")" aria-label="Next week">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </div>
+
+        <span class="fw-semibold">@Model.WeekLabel</span>
+
+        @if (!Model.IsCurrentWeek)
+        {
+            <a class="link-muted" asp-action="Schedule"
+               asp-route-week="@Model.ThisWeekStart.ToString("yyyy-MM-dd")">Back to this week</a>
+        }
+
+        <div class="ms-auto schedule-legend">
+            <span><i class="legend-swatch cell-booked"></i> Booked</span>
+            <span><i class="legend-swatch cell-scheduled"></i> Scheduled</span>
+            <span><i class="legend-swatch cell-free"></i> Available</span>
+            <span><i class="legend-swatch cell-unavailable"></i> Unavailable</span>
+            <span><i class="legend-swatch cell-break"></i> Break</span>
+        </div>
+    </div>
+
+    @if (!Model.HasWorkingHours)
+    {
+        <div class="p-4 text-center">
+            <span class="icon-bubble tone-purple mx-auto mb-2"><i class="bi bi-clock-history"></i></span>
+            <p class="fw-semibold mb-1">Set your working hours first</p>
+            <p class="text-secondary small mb-3">
+                The schedule fills itself in from the hours you work: free time turns into available
+                slots, and a class can only be placed inside them.
+            </p>
+            <a class="btn btn-panel" asp-action="Availability">Set working hours</a>
+        </div>
+    }
+    else if (Model.Rows.Count == 0)
+    {
+        <div class="p-4 text-center text-secondary">
+            Nothing falls in this week. Try another week, or create a class.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="schedule-grid">
+                <thead>
+                    <tr>
+                        <th class="time-col">Time</th>
+                        @foreach (var day in Model.Days)
+                        {
+                            <th class="@(day.IsToday ? "is-today" : null)">
+                                <span class="day-name">@day.Name</span>
+                                <span class="day-number">@day.Number</span>
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model.Rows)
+                    {
+                        <tr>
+                            <th class="time-col">@row.Band.Label</th>
+                            @foreach (var cell in row.Cells)
+                            {
+                                @* A null cell is covered by a longer class above it. *@
+                                @if (cell is not null)
+                                {
+                                    <td rowspan="@cell.RowSpan" class="cell cell-@cell.State.ToString().ToLowerInvariant()">
+                                        @switch (cell.State)
+                                        {
+                                            case CellKind.Booked:
+                                            case CellKind.Scheduled:
+                                                <a class="cell-class" asp-action="Group" asp-route-id="@cell.GroupId">
+                                                    <span class="cell-title">@cell.Subject</span>
+                                                    <span class="cell-detail">@cell.Detail</span>
+                                                    <span class="cell-foot">
+                                                        <span class="cell-seats"><i class="bi bi-people"></i> @cell.Seats</span>
+                                                        @if (cell.PendingRequests > 0)
+                                                        {
+                                                            <span class="badge-soft tone-orange">@cell.PendingRequests waiting</span>
+                                                        }
+                                                    </span>
+                                                </a>
+                                                break;
+
+                                            case CellKind.Free:
+                                                <a class="cell-free" asp-action="CreateGroup"
+                                                   asp-route-date="@cell.Date.ToString("yyyy-MM-dd")"
+                                                   asp-route-start="@cell.Start.ToString("HH:mm")"
+                                                   asp-route-end="@cell.End.ToString("HH:mm")">
+                                                    <span class="cell-plus">+</span>
+                                                    <span class="cell-detail">Available Slot</span>
+                                                </a>
+                                                break;
+
+                                            case CellKind.Break:
+                                                <span class="cell-flat">Break</span>
+                                                break;
+
+                                            default:
+                                                <span class="cell-flat">@(cell.Note ?? "Unavailable")</span>
+                                                break;
+                                        }
+                                    </td>
+                                }
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<div class="card-soft mt-3 p-3">
+    <div class="d-flex gap-3">
+        <span class="icon-bubble tone-blue"><i class="bi bi-info-circle"></i></span>
+        <div class="small text-secondary">
+            <p class="fw-semibold text-body mb-1">How it works</p>
+            <p class="mb-1">
+                Working hours decide where classes can go. A purple <strong>Available Slot</strong> is free
+                time inside them: click the <strong>+</strong> to create a class starting there.
+            </p>
+            <p class="mb-0">
+                A class holds its own students, so a student joins once and keeps their place for every
+                meeting. A class turns green as soon as someone joins, and stays joinable until it is full.
+            </p>
+        </div>
+    </div>
+</div>

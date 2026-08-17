@@ -385,6 +385,108 @@ body.sidebar-hidden .panel-main { margin-left: 0; }
     font-weight: 600;
 }
 
+/* ---------- Weekly schedule ---------- */
+.schedule-grid {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 6px;
+    table-layout: fixed;
+    min-width: 900px;
+}
+
+.schedule-grid thead th {
+    padding: 6px 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    color: var(--panel-muted);
+}
+
+.schedule-grid thead th.is-today { color: var(--panel-primary); }
+.schedule-grid .day-name { display: block; text-transform: uppercase; letter-spacing: .05em; font-size: 10px; }
+.schedule-grid .day-number { display: block; font-size: 17px; color: var(--panel-text); }
+.schedule-grid thead th.is-today .day-number { color: var(--panel-primary); }
+
+.schedule-grid .time-col {
+    width: 104px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--panel-muted);
+    text-align: right;
+    white-space: nowrap;
+    vertical-align: top;
+    padding-top: 12px;
+}
+
+.schedule-grid td.cell {
+    height: 74px;
+    border-radius: 12px;
+    padding: 0;
+    vertical-align: stretch;
+}
+
+/* Cell states double as the legend swatches, so the two can never drift apart. */
+.cell-booked      { background: #e8f8ef; border: 1px solid #b9e8ce; }
+.cell-scheduled   { background: #f1eefe; border: 1px solid #d7cffb; }
+.cell-free        { background: #faf9ff; border: 1px dashed #cfc6f7; }
+.cell-unavailable { background: #f4f5f9; border: 1px solid var(--panel-border); }
+.cell-break       { background: #fffaf2; border: 1px dashed #f2d9b5; }
+
+.legend-swatch {
+    display: inline-block;
+    width: 13px;
+    height: 13px;
+    border-radius: 4px;
+    vertical-align: -2px;
+}
+
+.schedule-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--panel-muted);
+}
+
+.schedule-legend span { display: inline-flex; align-items: center; gap: 5px; }
+
+.cell-class,
+.cell-free {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 8px 9px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.cell-free {
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    color: var(--panel-primary);
+}
+
+.cell-free:hover { background: var(--panel-primary-soft); border-radius: 11px; }
+.cell-plus { font-size: 19px; line-height: 1; font-weight: 600; }
+
+.cell-title { font-weight: 600; font-size: 12.5px; line-height: 1.2; }
+.cell-detail { font-size: 10.5px; color: var(--panel-muted); }
+.cell-foot { margin-top: auto; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.cell-seats { font-size: 11px; font-weight: 600; }
+
+.cell-flat {
+    display: grid;
+    place-items: center;
+    height: 100%;
+    font-size: 10.5px;
+    color: #a2a7ba;
+    padding: 4px;
+    text-align: center;
+}
+
+.stat-note { color: var(--panel-muted); font-size: 11px; }
+
 .crumbs { font-size: 12px; color: var(--panel-muted); }
 .crumbs a { color: var(--panel-muted); text-decoration: none; }
 .crumbs a:hover { color: var(--panel-primary); }
