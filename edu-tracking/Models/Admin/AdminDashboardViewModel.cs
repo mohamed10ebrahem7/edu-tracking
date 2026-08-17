@@ -16,10 +16,6 @@ public class AdminDashboardViewModel
     public IReadOnlyList<QuickAction> QuickActions { get; init; } = [];
 }
 
-/// <summary>Tone is a colour key: purple, green, blue, orange, red or gray.</summary>
-/// <param name="Trend">Optional; omitted when there is no comparison figure to show.</param>
-public record StatCard(string Label, string Value, string? Trend, string Icon, string Tone);
-
 public record DistributionSlice(string Label, int Count, string Tone);
 
 public record ActivityItem(string Title, string TimeAgo, string Icon, string Tone);

@@ -2,7 +2,7 @@
 
 <section class="card-soft">
     <form class="toolbar" method="get" asp-action="Admins">
-        <div class="admin-search me-auto">
+        <div class="panel-search me-auto">
             <i class="bi bi-search"></i>
             <input type="search" name="search" value="@Model.Filter.Search"
                    placeholder="Search name, username or email..." aria-label="Search admins" />
@@ -16,12 +16,12 @@
             }
         </select>
 
-        <button class="btn btn-admin-outline" type="submit">Apply</button>
-        <a class="btn btn-admin-outline" asp-action="Admins">Reset</a>
+        <button class="btn btn-panel-outline" type="submit">Apply</button>
+        <a class="btn btn-panel-outline" asp-action="Admins">Reset</a>
     </form>
 
     <div class="table-responsive">
-        <table class="admin-table">
+        <table class="panel-table">
             <thead>
                 <tr>
                     <th>Admin</th>

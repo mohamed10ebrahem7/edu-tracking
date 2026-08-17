@@ -1,0 +1,59 @@
+@*
+    Static navigation for the admin panel. Pages set ViewData["ActiveNav"] to highlight
+    their entry; give each item its asp-controller/asp-action as those screens get built.
+*@
+@{
+    var active = ViewData["ActiveNav"] as string ?? "dashboard";
+    string IsActive(string key) => active == key ? "active" : "";
+    var usersOpen = active is "admins" or "teachers" or "students" or "parents";
+}
+
+<aside class="panel-sidebar">
+    <a class="panel-brand" asp-controller="Admin" asp-action="Index">
+        <span class="panel-brand-mark"><i class="bi bi-mortarboard-fill"></i></span>
+        <span>
+            <span class="panel-brand-name d-block">EduTrack</span>
+            <span class="panel-brand-sub">Admin Panel</span>
+        </span>
+    </a>
+
+    <nav class="panel-nav">
+        <a class="panel-nav-link @IsActive("dashboard")" asp-controller="Admin" asp-action="Index">
+            <i class="bi bi-house-door-fill"></i> Dashboard
+        </a>
+
+        <div class="panel-nav-heading">Management</div>
+
+        <a class="panel-nav-link @(usersOpen ? "active" : "")" href="#usersMenu"
+           data-bs-toggle="collapse" role="button" aria-expanded="@(usersOpen ? "true" : "false")">
+            <i class="bi bi-people"></i> Users
+            <i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <div class="collapse show" id="usersMenu">
+            <ul class="panel-subnav">
+                <li><a class="@IsActive("admins")" asp-controller="Admin" asp-action="Admins">Admins</a></li>
+                <li><a class="@IsActive("teachers")" asp-controller="Admin" asp-action="Teachers">Teachers</a></li>
+                <li><a class="@IsActive("students")" asp-controller="Admin" asp-action="Students">Students</a></li>
+                <li><a class="@IsActive("parents")" asp-controller="Admin" asp-action="Parents">Parents</a></li>
+            </ul>
+        </div>
+
+        <a class="panel-nav-link" href="#"><i class="bi bi-collection"></i> Classes</a>
+        <a class="panel-nav-link" href="#"><i class="bi bi-calendar-event"></i> Sessions</a>
+        <a class="panel-nav-link" href="#"><i class="bi bi-file-earmark-text"></i> Exams</a>
+        <a class="panel-nav-link" href="#"><i class="bi bi-bar-chart"></i> Reports</a>
+        <a class="panel-nav-link" href="#"><i class="bi bi-patch-question"></i> MVQ Questions</a>
+
+        <div class="panel-nav-heading">Settings</div>
+
+        <a class="panel-nav-link" href="#"><i class="bi bi-shield-lock"></i> Roles &amp; Permissions</a>
+        <a class="panel-nav-link" href="#"><i class="bi bi-gear"></i> System Settings</a>
+        <a class="panel-nav-link" href="#"><i class="bi bi-journal-text"></i> Audit Logs</a>
+    </nav>
+
+    <div class="panel-sidebar-footer">
+        <button class="panel-nav-link border-0 bg-transparent w-100" type="button" data-toggle-sidebar>
+            <i class="bi bi-chevron-double-left"></i> Collapse
+        </button>
+    </div>
+</aside>

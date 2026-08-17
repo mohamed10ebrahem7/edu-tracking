@@ -1,21 +1,31 @@
+@*
+    One shell for every role's panel. A panel's _ViewStart picks its navigation through
+    ViewData["SidebarPartial"]; everything else is shared.
+*@
+@{
+    var sidebar = ViewData["SidebarPartial"] as string ?? "Panel/_AdminSidebar";
+    var user = new PanelUser(
+        ViewData["CurrentUserName"] as string ?? "Account",
+        ViewData["PanelSubtitle"] as string);
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - EduTrack Admin</title>
+    <title>@ViewData["Title"] - EduTrack</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/panel.css" asp-append-version="true" />
 </head>
-<body class="admin-body">
-    <partial name="Admin/_Sidebar" />
+<body class="panel-body">
+    <partial name="@sidebar" />
 
-    <div class="admin-main">
-        <partial name="Admin/_Topbar" model="@(ViewData["CurrentUserName"] as string ?? "Admin")" />
+    <div class="panel-main">
+        <partial name="Panel/_Topbar" model="user" />
 
-        <div class="admin-content">
-            <partial name="Admin/_Alerts" />
+        <div class="panel-content">
+            <partial name="Panel/_Alerts" />
             @RenderBody()
         </div>
     </div>

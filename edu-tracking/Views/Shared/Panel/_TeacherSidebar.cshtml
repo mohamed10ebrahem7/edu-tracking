@@ -1,0 +1,41 @@
+@*
+    Navigation for the teacher panel. Entries with nothing behind them yet are rendered
+    disabled rather than as links into dead ends.
+*@
+@{
+    var active = ViewData["ActiveNav"] as string ?? "schedule";
+    string IsActive(string key) => active == key ? "active" : "";
+}
+
+<aside class="panel-sidebar">
+    <a class="panel-brand" asp-controller="Teacher" asp-action="Schedule">
+        <span class="panel-brand-mark"><i class="bi bi-mortarboard-fill"></i></span>
+        <span>
+            <span class="panel-brand-name d-block">EduTrack</span>
+            <span class="panel-brand-sub">Teacher Panel</span>
+        </span>
+    </a>
+
+    <nav class="panel-nav">
+        <a class="panel-nav-link @IsActive("schedule")" asp-controller="Teacher" asp-action="Schedule">
+            <i class="bi bi-calendar-week"></i> My Schedule
+        </a>
+        <a class="panel-nav-link @IsActive("availability")" asp-controller="Teacher" asp-action="Availability">
+            <i class="bi bi-clock-history"></i> Availability
+        </a>
+
+        <div class="panel-nav-heading">Teaching</div>
+
+        <span class="panel-nav-link disabled"><i class="bi bi-collection"></i> My Classes <span class="nav-soon">Soon</span></span>
+        <span class="panel-nav-link disabled"><i class="bi bi-people"></i> Students <span class="nav-soon">Soon</span></span>
+        <span class="panel-nav-link disabled"><i class="bi bi-journal-check"></i> Assignments <span class="nav-soon">Soon</span></span>
+        <span class="panel-nav-link disabled"><i class="bi bi-bar-chart"></i> Reports <span class="nav-soon">Soon</span></span>
+        <span class="panel-nav-link disabled"><i class="bi bi-chat-dots"></i> Messages <span class="nav-soon">Soon</span></span>
+    </nav>
+
+    <div class="panel-sidebar-footer">
+        <button class="panel-nav-link border-0 bg-transparent w-100" type="button" data-toggle-sidebar>
+            <i class="bi bi-chevron-double-left"></i> Collapse
+        </button>
+    </div>
+</aside>

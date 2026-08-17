@@ -1,6 +1,7 @@
 using edu_tracking.Data;
 using edu_tracking.Domain;
 using edu_tracking.Domain.Identity;
+using edu_tracking.Models;
 using edu_tracking.Models.Admin;
 using Microsoft.EntityFrameworkCore;
 
