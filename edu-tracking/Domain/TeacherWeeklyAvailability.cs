@@ -1,9 +1,14 @@
 namespace edu_tracking.Domain;
 
 /// <summary>
-/// A recurring weekly working window. Times are the teacher's LOCAL wall-clock times:
-/// "Sunday 5pm" must stay 5pm after a daylight-saving shift, so the conversion to UTC
-/// happens when slots are materialised, using the teacher's <c>TimeZoneId</c>.
+/// A recurring weekly working window. Nothing is generated from it: it declares when the
+/// teacher works, which is used to validate that a class sits inside working hours and to
+/// paint the free time left over on the schedule.
+/// <para>
+/// Times are the teacher's LOCAL wall-clock times: "Sunday 5pm" must stay 5pm after a
+/// daylight-saving shift, so the conversion to UTC happens per date, using the teacher's
+/// <c>TimeZoneId</c>.
+/// </para>
 /// </summary>
 public class TeacherWeeklyAvailability : IAuditable
 {
@@ -16,7 +21,7 @@ public class TeacherWeeklyAvailability : IAuditable
     public TimeOnly StartTime { get; set; }
     public TimeOnly EndTime { get; set; }
 
-    /// <summary>Length of each slot the generator carves out of this window.</summary>
+    /// <summary>Granularity the schedule uses when slicing leftover time into free cells.</summary>
     public int SlotMinutes { get; set; } = 60;
 
     public DateOnly EffectiveFrom { get; set; }
@@ -25,6 +30,4 @@ public class TeacherWeeklyAvailability : IAuditable
 
     public DateTime CreatedAtUtc { get; set; }
     public DateTime? UpdatedAtUtc { get; set; }
-
-    public ICollection<TeacherSlot> GeneratedSlots { get; set; } = [];
 }

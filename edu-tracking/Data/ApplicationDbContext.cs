@@ -20,6 +20,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<TeacherTimeOff> TeacherTimeOffs => Set<TeacherTimeOff>();
     public DbSet<TeacherSlot> TeacherSlots => Set<TeacherSlot>();
 
+    public DbSet<ClassGroup> ClassGroups => Set<ClassGroup>();
+    public DbSet<ClassGroupSchedule> ClassGroupSchedules => Set<ClassGroupSchedule>();
+    public DbSet<ClassGroupMember> ClassGroupMembers => Set<ClassGroupMember>();
+
     public DbSet<Session> Sessions => Set<Session>();
     public DbSet<SessionParticipant> SessionParticipants => Set<SessionParticipant>();
     public DbSet<SessionReport> SessionReports => Set<SessionReport>();

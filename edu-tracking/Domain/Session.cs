@@ -1,8 +1,9 @@
 namespace edu_tracking.Domain;
 
 /// <summary>
-/// A lesson occupying exactly one <see cref="TeacherSlot"/>. Holds one student for a
-/// one-to-one lesson and several for a group class, via <see cref="SessionParticipant"/>.
+/// One dated meeting of a <see cref="ClassGroup"/>, occupying exactly one
+/// <see cref="TeacherSlot"/>. Seats are claimed on the group, not here: this row exists to
+/// anchor attendance via <see cref="SessionParticipant"/> and a <see cref="SessionReport"/>.
 /// </summary>
 public class Session : IAuditable
 {
@@ -11,20 +12,25 @@ public class Session : IAuditable
     public long SlotId { get; set; }
     public TeacherSlot Slot { get; set; } = null!;
 
+    public int ClassGroupId { get; set; }
+    public ClassGroup ClassGroup { get; set; } = null!;
+
     public Guid TeacherId { get; set; }
     public Teacher Teacher { get; set; } = null!;
 
     public int SubjectId { get; set; }
     public Subject Subject { get; set; } = null!;
 
+    /// <summary>Stamped from the group, so renaming the group later cannot rewrite history.</summary>
     public SessionType Type { get; set; } = SessionType.OneToOne;
+    public ClassKind Kind { get; set; } = ClassKind.Lecture;
     public string? Title { get; set; }
 
     public int Capacity { get; set; } = 1;
 
     /// <summary>
-    /// Denormalised count of confirmed participants. Only ever changed by a conditional
-    /// UPDATE so two students cannot claim the same last seat.
+    /// Count of participants recorded for this meeting. Membership is capped on the group,
+    /// so this only grows as attendance rows are created.
     /// </summary>
     public int SeatsTaken { get; set; }
 

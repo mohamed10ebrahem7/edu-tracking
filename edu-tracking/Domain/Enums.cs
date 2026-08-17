@@ -41,6 +41,21 @@ public enum SessionType
     Group = 2
 }
 
+/// <summary>What a class group meets for. Shown next to the grade, as "Grade 7 - Lecture".</summary>
+public enum ClassKind
+{
+    Lecture = 1,
+    Review = 2,
+    Exam = 3
+}
+
+public enum MemberStatus
+{
+    Active = 1,
+    Left = 2,
+    Removed = 3
+}
+
 public enum SessionStatus
 {
     Scheduled = 1,

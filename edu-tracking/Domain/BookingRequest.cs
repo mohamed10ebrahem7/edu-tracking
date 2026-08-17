@@ -1,23 +1,22 @@
 namespace edu_tracking.Domain;
 
 /// <summary>
-/// A student asking a teacher for a seat. Targets the slot rather than the session,
-/// because every bookable thing — an empty one-to-one opening and a published group
-/// class alike — occupies exactly one slot.
+/// A student asking to join a <see cref="ClassGroup"/> for the whole of its run, rather
+/// than for one meeting: a one-to-one class is simply a group capped at one student, so
+/// there is a single way in.
 /// <para>
-/// Pending requests deliberately do NOT hold a seat: several students may compete for
-/// the same slot and the teacher chooses. Capacity is claimed at approval time, and a
-/// request expires when its slot's start time passes.
+/// Pending requests deliberately do NOT hold a place: several students may compete for the
+/// last place in a group and the teacher chooses. The place is claimed at approval time.
 /// </para>
 /// </summary>
 public class BookingRequest
 {
     public long Id { get; set; }
 
-    public long SlotId { get; set; }
-    public TeacherSlot Slot { get; set; } = null!;
+    public int ClassGroupId { get; set; }
+    public ClassGroup ClassGroup { get; set; } = null!;
 
-    /// <summary>Denormalised from the slot to drive the teacher's inbox query.</summary>
+    /// <summary>Denormalised from the group to drive the teacher's inbox query.</summary>
     public Guid TeacherId { get; set; }
     public Teacher Teacher { get; set; } = null!;
 

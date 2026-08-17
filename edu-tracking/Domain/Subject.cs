@@ -12,6 +12,7 @@ public class Subject : IAuditable
     public DateTime? UpdatedAtUtc { get; set; }
 
     public ICollection<TeacherSubject> Teachers { get; set; } = [];
+    public ICollection<ClassGroup> ClassGroups { get; set; } = [];
     public ICollection<Session> Sessions { get; set; } = [];
     public ICollection<Exam> Exams { get; set; } = [];
 }

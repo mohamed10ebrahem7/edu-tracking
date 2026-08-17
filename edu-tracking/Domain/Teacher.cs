@@ -27,6 +27,7 @@ public class Teacher
     public ICollection<TeacherSubject> Subjects { get; set; } = [];
     public ICollection<TeacherWeeklyAvailability> WeeklyAvailability { get; set; } = [];
     public ICollection<TeacherTimeOff> TimeOff { get; set; } = [];
+    public ICollection<ClassGroup> ClassGroups { get; set; } = [];
     public ICollection<TeacherSlot> Slots { get; set; } = [];
     public ICollection<Session> Sessions { get; set; } = [];
     public ICollection<Exam> Exams { get; set; } = [];

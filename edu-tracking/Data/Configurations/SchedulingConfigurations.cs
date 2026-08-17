@@ -55,13 +55,14 @@ public class TeacherSlotConfiguration : IEntityTypeConfiguration<TeacherSlot>
             .HasForeignKey(s => s.TeacherId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // A deleted weekly rule must not take surviving (booked) slots with it.
-        builder.HasOne(s => s.SourceAvailability)
-            .WithMany(a => a.GeneratedSlots)
-            .HasForeignKey(s => s.SourceAvailabilityId)
+        // A rescheduled group must not take slots with attendance already on them.
+        builder.HasOne(s => s.ClassGroupSchedule)
+            .WithMany(cs => cs.GeneratedSlots)
+            .HasForeignKey(s => s.ClassGroupScheduleId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Makes the slot generator idempotent: re-running it cannot duplicate a slot.
+        // Two classes can never start at the same moment for one teacher, and re-running
+        // generation cannot duplicate a meeting.
         builder.HasIndex(s => new { s.TeacherId, s.StartUtc }).IsUnique();
         builder.HasIndex(s => new { s.StartUtc, s.Status });
     }
@@ -74,7 +75,7 @@ public class SessionConfiguration : IEntityTypeConfiguration<Session>
         builder.ToTable("Sessions", t =>
         {
             t.HasCheckConstraint("CK_Session_Capacity", "[Capacity] >= 1");
-            t.HasCheckConstraint("CK_Session_Seats", "[SeatsTaken] >= 0 AND [SeatsTaken] <= [Capacity]");
+            t.HasCheckConstraint("CK_Session_Seats", "[SeatsTaken] >= 0");
             t.HasCheckConstraint("CK_Session_Range", "[EndUtc] > [StartUtc]");
         });
 
@@ -90,6 +91,11 @@ public class SessionConfiguration : IEntityTypeConfiguration<Session>
             .HasForeignKey<Session>(s => s.SlotId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(s => s.ClassGroup)
+            .WithMany(g => g.Sessions)
+            .HasForeignKey(s => s.ClassGroupId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne(s => s.Teacher)
             .WithMany(t => t.Sessions)
             .HasForeignKey(s => s.TeacherId)
@@ -103,6 +109,7 @@ public class SessionConfiguration : IEntityTypeConfiguration<Session>
         // Drives the student-facing "available sessions for a subject" search.
         builder.HasIndex(s => new { s.SubjectId, s.StartUtc });
         builder.HasIndex(s => new { s.TeacherId, s.StartUtc });
+        builder.HasIndex(s => new { s.ClassGroupId, s.StartUtc });
     }
 }
 
@@ -155,9 +162,9 @@ public class BookingRequestConfiguration : IEntityTypeConfiguration<BookingReque
         builder.Property(r => r.StudentMessage).HasMaxLength(1000);
         builder.Property(r => r.DeclineMessageToStudent).HasMaxLength(1000);
 
-        builder.HasOne(r => r.Slot)
-            .WithMany(s => s.BookingRequests)
-            .HasForeignKey(r => r.SlotId)
+        builder.HasOne(r => r.ClassGroup)
+            .WithMany(g => g.JoinRequests)
+            .HasForeignKey(r => r.ClassGroupId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(r => r.Teacher)
@@ -174,8 +181,8 @@ public class BookingRequestConfiguration : IEntityTypeConfiguration<BookingReque
         builder.HasIndex(r => new { r.TeacherId, r.Status, r.RequestedAtUtc });
         builder.HasIndex(r => new { r.StudentId, r.Status });
 
-        // One live request per student per slot; declined ones may be re-requested.
-        builder.HasIndex(r => new { r.SlotId, r.StudentId })
+        // One live request per student per group; declined ones may be re-requested.
+        builder.HasIndex(r => new { r.ClassGroupId, r.StudentId })
             .IsUnique()
             .HasFilter($"[Status] = {(int)BookingRequestStatus.Pending}");
     }

@@ -1,8 +1,9 @@
 namespace edu_tracking.Domain;
 
 /// <summary>
-/// A concrete block of time on a teacher's calendar. This is the single source of truth
-/// for the schedule: weekly templates only ever materialise into rows here.
+/// A concrete block of time on a teacher's calendar: one dated meeting of a class group,
+/// or a one-off block the teacher marked unavailable. Free time is not stored here, it is
+/// whatever is left of the teacher's working hours once these rows are laid over them.
 /// </summary>
 public class TeacherSlot : IAuditable
 {
@@ -17,9 +18,9 @@ public class TeacherSlot : IAuditable
     public SlotStatus Status { get; set; } = SlotStatus.Available;
     public SlotOrigin Origin { get; set; } = SlotOrigin.Manual;
 
-    /// <summary>The weekly rule that produced this slot, when generated.</summary>
-    public int? SourceAvailabilityId { get; set; }
-    public TeacherWeeklyAvailability? SourceAvailability { get; set; }
+    /// <summary>The group's weekday row that produced this slot, when generated.</summary>
+    public int? ClassGroupScheduleId { get; set; }
+    public ClassGroupSchedule? ClassGroupSchedule { get; set; }
 
     /// <summary>Teacher-private; never expose on student-facing responses.</summary>
     public string? Note { get; set; }
@@ -30,5 +31,4 @@ public class TeacherSlot : IAuditable
     public DateTime? UpdatedAtUtc { get; set; }
 
     public Session? Session { get; set; }
-    public ICollection<BookingRequest> BookingRequests { get; set; } = [];
 }
