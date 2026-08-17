@@ -26,7 +26,14 @@ public class AccountAdminService(ApplicationDbContext db, UserManager<Applicatio
     /// The context is configured with EnableRetryOnFailure, which requires a manual
     /// transaction to sit inside the execution strategy so the whole unit can be retried.
     /// </summary>
-    public Task<AccountResult> InTransactionAsync(Func<Task<AccountResult>> action)
+    public Task<AccountResult> InTransactionAsync(Func<Task<AccountResult>> action) =>
+        InTransactionAsync(action, r => r.Succeeded);
+
+    /// <summary>
+    /// The same helper for services with their own result type: <paramref name="succeeded"/>
+    /// decides whether the work commits.
+    /// </summary>
+    public Task<T> InTransactionAsync<T>(Func<Task<T>> action, Func<T, bool> succeeded)
     {
         var strategy = db.Database.CreateExecutionStrategy();
 
@@ -35,7 +42,7 @@ public class AccountAdminService(ApplicationDbContext db, UserManager<Applicatio
             await using var transaction = await db.Database.BeginTransactionAsync();
 
             var result = await action();
-            if (result.Succeeded)
+            if (succeeded(result))
             {
                 await transaction.CommitAsync();
             }

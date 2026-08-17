@@ -3,8 +3,8 @@ using edu_tracking.Domain;
 namespace edu_tracking.Infrastructure;
 
 /// <summary>
-/// Small presentation helpers shared by the admin views. Tone keys map to the
-/// <c>tone-*</c> classes in admin.css.
+/// Small presentation helpers shared by the panel views. Tone keys map to the
+/// <c>tone-*</c> classes in panel.css.
 /// </summary>
 public static class Ui
 {
